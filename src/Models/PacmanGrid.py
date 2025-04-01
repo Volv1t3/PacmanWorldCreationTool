@@ -40,7 +40,7 @@ class PacmanGrid:
         self.hardcodedLocationGrid = np.full((16, 16), "",
                                                dtype='U3')
         #? Lets now define the count grid such that we can store the information of each cell's visits
-        self.hardCodedVisitsGrid = np.full((16,16), "", dtype='U8')
+        self.hardCodedVisitsGrid = np.full((16,16), 0, dtype=int)
         #? Lets now define a list of random numbers in the range of 1 through 4 inclusive stored in a pretty format
         self.hardCodedMovementList: list[str] = []
         self.hardCodedMovementList = [f"DEC {np.random.randint(1, 5)}" for _ in range(100)]
@@ -235,6 +235,15 @@ class PacmanGrid:
 
         #! 4. Lets add the movement grid to the output
         serializable_result += "\n" + "\n".join(self.hardCodedMovementList)
+
+        #! 5. Lets add the hardcoded locations to the output
+        initialVisitsValueForCells: list[str] = []
+        for row in range(0, 16):
+            for column in range(0, 16):
+                initialVisitsValueForCells.append("initialVisitsValueForCells, DEC 0")
+        initialVisitsValueForCells[1:] = [value.replace("initialVisitsValueForCells,", " " * 20) for value in
+                                        initialVisitsValueForCells[1:]]
+        serializable_result += "\n" + "\n".join(initialVisitsValueForCells)
 
         return serializable_result
     
