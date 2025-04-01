@@ -1,0 +1,462 @@
+IniciarJuego, LoadI IndexColores
+			StoreI IndexDisplay
+			Load IndexDisplay
+			Add Uno
+			Store IndexDisplay
+			Load IndexColores
+			Add Uno
+			Store IndexColores
+			Load Contador
+			Add Uno
+			Store Contador
+			Subt Limite
+			SkipCond 800
+			Jump IniciarJuego		
+LoopMovimientos, Load i
+				Add Uno
+				Store i
+				Subt Cien
+				SkipCond 800
+				Jump RevisarDerecha
+				Jump End
+RevisarDerecha, LoadI IndexMovement
+				Subt Derecha
+				SkipCond 400
+				Jump RevisarArriba
+				Load PacmanActual
+				Add Uno
+				Store PacmanActual
+				Jump RevisarAzul
+RevisarArriba, LoadI IndexMovement
+				Subt Arriba
+				SkipCond 400
+				Jump RevisarIzquierda
+				Load PacmanActual
+				Subt DeisSeis
+				Store PacmanActual
+				Jump RevisarAzul
+RevisarIzquierda,LoadI IndexMovement
+				Subt Izquierda
+				SkipCond 400
+				Jump RevisarAbajo
+				Load PacmanActual
+				Subt Uno
+				Store PacmanActual
+				Jump RevisarAzul
+RevisarAbajo, LoadI IndexMovement
+				Subt Abajo
+				SkipCond 400 
+				Jump LoopMovimientos
+				Load PacmanActual
+				Add DeisSeis
+				Store PacmanActual
+RevisarAzul, LoadI PacmanActual
+			Subt Azul
+			SkipCond 400
+			Jump Mover
+			Load PacmanAntiguo
+			Store PacmanActual
+			Jump IndexMovimientoMasUno
+Mover, 	Load Negro
+		StoreI PacmanAntiguo
+		Load Amarillo
+		StoreI PacmanActual
+		Load PacmanActual
+		Store PacmanAntiguo
+		Jump IndexMovimientoMasUno		
+IndexMovimientoMasUno, Load IndexMovement
+						Add Uno
+						Store IndexMovement
+						Jump LoopMovimientos
+End, Halt
+i, DEC 0
+PacmanInicio, HEX FC8
+PacmanActual, HEX FC8
+PacmanAntiguo, HEX FC8
+Limite, DEC 255
+Uno, DEC 1
+Contador, DEC 0
+Derecha, DEC 1
+Arriba, DEC 2
+Izquierda, DEC 3
+Abajo, DEC 4
+DeisSeis, DEC 16
+Amarillo, HEX 7FE0
+Azul, HEX 001F
+Negro, HEX 0000
+Cien, DEC 100
+IndexDisplay, Hex F00
+IndexColores, HEX 059
+Fila1, HEX FFFF
+HEX FFFF
+HEX FFFF
+HEX FFFF
+HEX 0000
+HEX 0000
+HEX 0000
+HEX 001F
+HEX 0000
+HEX 0000
+HEX 0000
+HEX 0000
+HEX 0000
+HEX 0000
+HEX 0000
+HEX 0000
+
+Fila2, HEX 0000
+HEX 0000
+HEX 001F
+HEX 001F
+HEX 001F
+HEX 0000
+HEX 0000
+HEX 001F
+HEX 0000
+HEX 0000
+HEX 001F
+HEX 001F
+HEX 001F
+HEX 0000
+HEX 0000
+HEX 0000
+
+Fila3, HEX 0000
+HEX 0000
+HEX 001F
+HEX 0000
+HEX 001F
+HEX 0000
+HEX 0000
+HEX 0000
+HEX 0000
+HEX 0000
+HEX 001F
+HEX 0000
+HEX 001F
+HEX 0000
+HEX 0000
+HEX 0000
+
+Fila4, HEX 0000
+HEX 0000
+HEX 001F
+HEX 001F
+HEX 001F
+HEX 0000
+HEX 0000
+HEX 0000
+HEX 0000
+HEX 0000
+HEX 001F
+HEX 001F
+HEX 001F
+HEX 0000
+HEX 0000
+HEX FFFF
+
+Fila5, HEX 0000
+HEX 0000
+HEX 0000
+HEX 0000
+HEX 0000
+HEX 0000
+HEX 0000
+HEX 0000
+HEX 0000
+HEX 0000
+HEX 0000
+HEX 0000
+HEX 0000
+HEX 0000
+HEX 0000
+HEX FFFF
+
+Fila6, HEX 0000
+HEX 0000
+HEX 0000
+HEX 001F
+HEX 001F
+HEX 0000
+HEX 0000
+HEX FFFF
+HEX FFFF
+HEX FFFF
+HEX 0000
+HEX 0000
+HEX 001F
+HEX 001F
+HEX 0000
+HEX FFFF
+
+Fila7, HEX 0000
+HEX 0000
+HEX 0000
+HEX 001F
+HEX 001F
+HEX 0000
+HEX 0000
+HEX 0000
+HEX 0000
+HEX 0000
+HEX 0000
+HEX 0000
+HEX 001F
+HEX 001F
+HEX 0000
+HEX FFFF
+
+Fila8, HEX 0000
+HEX FFFF
+HEX 0000
+HEX 0000
+HEX 0000
+HEX FFFF
+HEX 0000
+HEX 7800
+HEX F5A0
+HEX 0000
+HEX FFFF
+HEX 0000
+HEX 0000
+HEX 0000
+HEX 0000
+HEX FFFF
+
+Fila9, HEX 0000
+HEX FFFF
+HEX 0000
+HEX 0000
+HEX 0000
+HEX FFFF
+HEX 0000
+HEX 1BFE
+HEX FDDC
+HEX 0000
+HEX FFFF
+HEX 0000
+HEX 0000
+HEX 0000
+HEX 0000
+HEX FFFF
+
+Fila10, HEX 0000
+HEX FFFF
+HEX 001F
+HEX 001F
+HEX 0000
+HEX 0000
+HEX 0000
+HEX 0000
+HEX 0000
+HEX 0000
+HEX 0000
+HEX 0000
+HEX 001F
+HEX 001F
+HEX 0000
+HEX 0000
+
+Fila11, HEX 0000
+HEX 0000
+HEX 0000
+HEX 001F
+HEX 0000
+HEX 0000
+HEX 0000
+HEX FFFF
+HEX FFFF
+HEX FFFF
+HEX 0000
+HEX 0000
+HEX 001F
+HEX 0000
+HEX 0000
+HEX 0000
+
+Fila12, HEX 0000
+HEX 0000
+HEX 0000
+HEX 001F
+HEX 0000
+HEX 0000
+HEX 0000
+HEX 0000
+HEX 0000
+HEX 0000
+HEX 0000
+HEX 0000
+HEX 001F
+HEX 0000
+HEX 0000
+HEX 0000
+
+Fila13, HEX 0000
+HEX 0000
+HEX 0000
+HEX 0000
+HEX 0000
+HEX 0000
+HEX 0000
+HEX 0000
+HEX 7FE0
+HEX 0000
+HEX 0000
+HEX 0000
+HEX 0000
+HEX 0000
+HEX 0000
+HEX 0000
+
+Fila14, HEX 0000
+HEX FFFF
+HEX FFFF
+HEX FFFF
+HEX FFFF
+HEX FFFF
+HEX 0000
+HEX 0000
+HEX 0000
+HEX 0000
+HEX 0000
+HEX 0000
+HEX FFFF
+HEX FFFF
+HEX 0000
+HEX 0000
+
+Fila15, HEX 0000
+HEX 0000
+HEX 0000
+HEX 001F
+HEX 001F
+HEX 001F
+HEX 0000
+HEX 0000
+HEX 001F
+HEX FFFF
+HEX FFFF
+HEX 001F
+HEX 001F
+HEX 001F
+HEX 0000
+HEX 0000
+
+Fila16, HEX 0000
+HEX 0000
+HEX 0000
+HEX 0000
+HEX 0000
+HEX 0000
+HEX 0000
+HEX 0000
+HEX 001F
+HEX 0000
+HEX 0000
+HEX 0000
+HEX 0000
+HEX 0000
+HEX 0000
+HEX 001F
+IndexMovement, HEX 15B
+InicioMovement, Hex 15B
+DEC 2
+DEC 4
+DEC 4
+DEC 2
+DEC 2
+DEC 1
+DEC 1
+DEC 1
+DEC 2
+DEC 1
+DEC 4
+DEC 3
+DEC 4
+DEC 4
+DEC 2
+DEC 4
+DEC 2
+DEC 4
+DEC 3
+DEC 3
+DEC 3
+DEC 1
+DEC 2
+DEC 4
+DEC 2
+DEC 4
+DEC 3
+DEC 3
+DEC 2
+DEC 2
+DEC 3
+DEC 3
+DEC 1
+DEC 3
+DEC 4
+DEC 3
+DEC 2
+DEC 2
+DEC 3
+DEC 2
+DEC 1
+DEC 2
+DEC 3
+DEC 1
+DEC 4
+DEC 4
+DEC 1
+DEC 1
+DEC 2
+DEC 4
+DEC 4
+DEC 3
+DEC 1
+DEC 3
+DEC 1
+DEC 2
+DEC 4
+DEC 4
+DEC 4
+DEC 3
+DEC 4
+DEC 4
+DEC 3
+DEC 3
+DEC 2
+DEC 3
+DEC 3
+DEC 1
+DEC 2
+DEC 4
+DEC 1
+DEC 4
+DEC 1
+DEC 1
+DEC 3
+DEC 2
+DEC 1
+DEC 1
+DEC 4
+DEC 3
+DEC 2
+DEC 3
+DEC 3
+DEC 2
+DEC 3
+DEC 4
+DEC 2
+DEC 1
+DEC 3
+DEC 3
+DEC 4
+DEC 2
+DEC 2
+DEC 1
+DEC 4
+DEC 3
+DEC 4
+DEC 3
+DEC 3
+DEC 4
