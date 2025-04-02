@@ -26,7 +26,10 @@ RevisarDerecha, LoadI IndexMovement
 				Load PacmanActual
 				Add Uno
 				Store PacmanActual
-				Jump RevisarAzul
+				Load CoordenadaPACMANColumnaActual
+				Add Uno
+				Store CoordenadaPACMANColumnaActual
+				Jump RevisarCoordenadaColumnaDerecha
 RevisarArriba, LoadI IndexMovement
 				Subt Arriba
 				SkipCond 400
@@ -34,7 +37,10 @@ RevisarArriba, LoadI IndexMovement
 				Load PacmanActual
 				Subt DeisSeis
 				Store PacmanActual
-				Jump RevisarAzul
+				Load CoordenadaPACMANFilaActual
+				Subt Uno
+				Store CoordenadaPACMANFilaActual
+				Jump RevisarCoordenadaColumnaDerecha
 RevisarIzquierda,LoadI IndexMovement
 				Subt Izquierda
 				SkipCond 400
@@ -42,7 +48,10 @@ RevisarIzquierda,LoadI IndexMovement
 				Load PacmanActual
 				Subt Uno
 				Store PacmanActual
-				Jump RevisarAzul
+				Load CoordenadaPACMANColumnaActual
+				Subt Uno
+				Store CoordenadaPACMANColumnaActual
+				Jump RevisarCoordenadaColumnaDerecha
 RevisarAbajo, LoadI IndexMovement
 				Subt Abajo
 				SkipCond 400 
@@ -50,12 +59,56 @@ RevisarAbajo, LoadI IndexMovement
 				Load PacmanActual
 				Add DeisSeis
 				Store PacmanActual
+				Load CoordenadaPACMANFilaActual
+				Add Uno
+				Store CoordenadaPACMANFilaActual
+RevisarCoordenadaColumnaDerecha, Load CoordenadaPACMANColumnaActual
+						Subt LimiteDisplay
+						SkipCond 800
+						Jump RevisarCoordenadaColumnaIzquierda
+						Load PacmanActual
+						Subt DeisSeis
+						Store PacmanActual
+						Clear
+						Store CoordenadaPACMANColumnaActual
+						Jump RevisarAzul
+RevisarCoordenadaColumnaIzquierda, Load CoordenadaPACMANColumnaActual
+						SkipCond 000
+						Jump RevisarCoordenadaFilaAbajo
+						Load PacmanActual
+						Add DeisSeis
+						Store PacmanActual
+						Load LimiteDisplay
+						Store CoordenadaPACMANColumnaActual
+						Jump RevisarAzul  		
+RevisarCoordenadaFilaAbajo, Load CoordenadaPACMANFilaActual
+						Subt LimiteDisplay
+						SkipCond 800
+						Jump RevisarCoordenadaFilaArriba
+						Load PacmanActual
+						Subt DosCincoSeis
+						Store PacmanActual
+						Clear
+						Store CoordenadaPACMANFilaActual
+						Jump RevisarAzul						
+RevisarCoordenadaFilaArriba, Load CoordenadaPACMANFilaActual
+						SkipCond 000
+						Jump RevisarAzul
+						Load PacmanActual
+						Add DosCincoSeis
+						Store PacmanActual
+						Load LimiteDisplay
+						Store CoordenadaPACMANFilaActual
 RevisarAzul, LoadI PacmanActual
 			Subt Azul
 			SkipCond 400
 			Jump Mover
 			Load PacmanAntiguo
 			Store PacmanActual
+			Load CoordenadaPACMANColumnaAnterior
+			Store CoordenadaPACMANColumnaActual
+			Load CoordenadaPACMANFilaAnterior
+			Store CoordenadaPACMANFilaActual
 			Jump IndexMovimientoMasUno
 Mover, 	Load Negro
 		StoreI PacmanAntiguo
@@ -63,6 +116,10 @@ Mover, 	Load Negro
 		StoreI PacmanActual
 		Load PacmanActual
 		Store PacmanAntiguo
+		Load CoordenadaPACMANColumnaActual
+		Store CoordenadaPACMANColumnaAnterior
+		Load CoordenadaPACMANFilaActual
+		Store CoordenadaPACMANFilaAnterior
 		Jump IndexMovimientoMasUno		
 IndexMovimientoMasUno, Load IndexMovement
 						Add Uno
@@ -70,10 +127,8 @@ IndexMovimientoMasUno, Load IndexMovement
 						Jump LoopMovimientos
 End, Halt
 i, DEC 0
-PacmanInicio, HEX FC8
-PacmanActual, HEX FC8
-PacmanAntiguo, HEX FC8
 Limite, DEC 255
+LimiteDisplay, DEC 15
 Uno, DEC 1
 Contador, DEC 0
 Derecha, DEC 1
@@ -81,382 +136,407 @@ Arriba, DEC 2
 Izquierda, DEC 3
 Abajo, DEC 4
 DeisSeis, DEC 16
+DosCincoSeis, DEC 256
 Amarillo, HEX 7FE0
 Azul, HEX 001F
 Negro, HEX 0000
 Cien, DEC 100
 IndexDisplay, Hex F00
-IndexColores, HEX 059
-Fila1, HEX FFFF
-HEX FFFF
-HEX FFFF
-HEX FFFF
-HEX 0000
-HEX 0000
-HEX 0000
-HEX 001F
-HEX 0000
-HEX 0000
-HEX 0000
-HEX 0000
-HEX 0000
-HEX 0000
-HEX 0000
-HEX 0000
+IndexColores, HEX 0B9
+IndexMovement, HEX 1B9
+CoordenadaPACMANFilaInicial, DEC 11
+CoordenadaPACMANFilaActual, DEC 11
+CoordenadaPACMANFilaAnterior, DEC 11
+CoordenadaPACMANColumnaInicial, DEC 7
+CoordenadaPACMANColumnaActual, DEC 7
+CoordenadaPACMANColumnaAnterior, DEC 7
+PacmanActual, HEX FB7
+PacmanAntiguo, HEX FB7
 
-Fila2, HEX 0000
-HEX 0000
-HEX 001F
-HEX 001F
-HEX 001F
-HEX 0000
-HEX 0000
-HEX 001F
-HEX 0000
-HEX 0000
-HEX 001F
-HEX 001F
-HEX 001F
-HEX 0000
-HEX 0000
-HEX 0000
-
-Fila3, HEX 0000
-HEX 0000
-HEX 001F
-HEX 0000
-HEX 001F
-HEX 0000
-HEX 0000
-HEX 0000
-HEX 0000
-HEX 0000
-HEX 001F
-HEX 0000
-HEX 001F
-HEX 0000
-HEX 0000
-HEX 0000
-
-Fila4, HEX 0000
-HEX 0000
-HEX 001F
-HEX 001F
-HEX 001F
-HEX 0000
-HEX 0000
-HEX 0000
-HEX 0000
-HEX 0000
-HEX 001F
-HEX 001F
-HEX 001F
-HEX 0000
-HEX 0000
-HEX FFFF
-
-Fila5, HEX 0000
-HEX 0000
-HEX 0000
-HEX 0000
-HEX 0000
-HEX 0000
-HEX 0000
-HEX 0000
-HEX 0000
-HEX 0000
-HEX 0000
-HEX 0000
-HEX 0000
-HEX 0000
-HEX 0000
-HEX FFFF
-
-Fila6, HEX 0000
-HEX 0000
-HEX 0000
-HEX 001F
-HEX 001F
-HEX 0000
-HEX 0000
-HEX FFFF
-HEX FFFF
-HEX FFFF
-HEX 0000
-HEX 0000
-HEX 001F
-HEX 001F
-HEX 0000
-HEX FFFF
-
-Fila7, HEX 0000
-HEX 0000
-HEX 0000
-HEX 001F
-HEX 001F
-HEX 0000
-HEX 0000
-HEX 0000
-HEX 0000
-HEX 0000
-HEX 0000
-HEX 0000
-HEX 001F
-HEX 001F
-HEX 0000
-HEX FFFF
-
-Fila8, HEX 0000
-HEX FFFF
-HEX 0000
-HEX 0000
-HEX 0000
-HEX FFFF
-HEX 0000
-HEX 7800
-HEX F5A0
-HEX 0000
-HEX FFFF
-HEX 0000
-HEX 0000
-HEX 0000
-HEX 0000
-HEX FFFF
-
-Fila9, HEX 0000
-HEX FFFF
-HEX 0000
-HEX 0000
-HEX 0000
-HEX FFFF
-HEX 0000
-HEX 1BFE
-HEX FDDC
-HEX 0000
-HEX FFFF
-HEX 0000
-HEX 0000
-HEX 0000
-HEX 0000
-HEX FFFF
-
-Fila10, HEX 0000
-HEX FFFF
-HEX 001F
-HEX 001F
-HEX 0000
-HEX 0000
-HEX 0000
-HEX 0000
-HEX 0000
-HEX 0000
-HEX 0000
-HEX 0000
-HEX 001F
-HEX 001F
-HEX 0000
-HEX 0000
-
-Fila11, HEX 0000
-HEX 0000
-HEX 0000
-HEX 001F
-HEX 0000
-HEX 0000
-HEX 0000
-HEX FFFF
-HEX FFFF
-HEX FFFF
-HEX 0000
-HEX 0000
-HEX 001F
-HEX 0000
-HEX 0000
-HEX 0000
-
-Fila12, HEX 0000
-HEX 0000
-HEX 0000
-HEX 001F
-HEX 0000
-HEX 0000
-HEX 0000
-HEX 0000
-HEX 0000
-HEX 0000
-HEX 0000
-HEX 0000
-HEX 001F
-HEX 0000
-HEX 0000
-HEX 0000
-
-Fila13, HEX 0000
-HEX 0000
-HEX 0000
-HEX 0000
-HEX 0000
-HEX 0000
-HEX 0000
-HEX 0000
-HEX 7FE0
-HEX 0000
-HEX 0000
-HEX 0000
-HEX 0000
-HEX 0000
-HEX 0000
-HEX 0000
-
-Fila14, HEX 0000
-HEX FFFF
-HEX FFFF
-HEX FFFF
-HEX FFFF
-HEX FFFF
-HEX 0000
-HEX 0000
-HEX 0000
-HEX 0000
-HEX 0000
-HEX 0000
-HEX FFFF
-HEX FFFF
-HEX 0000
-HEX 0000
-
-Fila15, HEX 0000
-HEX 0000
-HEX 0000
-HEX 001F
-HEX 001F
-HEX 001F
-HEX 0000
-HEX 0000
-HEX 001F
-HEX FFFF
-HEX FFFF
-HEX 001F
-HEX 001F
-HEX 001F
-HEX 0000
-HEX 0000
-
-Fila16, HEX 0000
-HEX 0000
-HEX 0000
-HEX 0000
-HEX 0000
-HEX 0000
-HEX 0000
-HEX 0000
-HEX 001F
-HEX 0000
-HEX 0000
-HEX 0000
-HEX 0000
-HEX 0000
-HEX 0000
-HEX 001F
-IndexMovement, HEX 15B
-InicioMovement, Hex 15B
-DEC 2
-DEC 4
-DEC 4
-DEC 2
-DEC 2
-DEC 1
-DEC 1
-DEC 1
-DEC 2
-DEC 1
-DEC 4
-DEC 3
-DEC 4
-DEC 4
-DEC 2
-DEC 4
-DEC 2
-DEC 4
-DEC 3
-DEC 3
-DEC 3
-DEC 1
-DEC 2
-DEC 4
-DEC 2
-DEC 4
-DEC 3
-DEC 3
-DEC 2
-DEC 2
-DEC 3
-DEC 3
-DEC 1
-DEC 3
-DEC 4
-DEC 3
-DEC 2
-DEC 2
-DEC 3
-DEC 2
-DEC 1
-DEC 2
-DEC 3
-DEC 1
-DEC 4
-DEC 4
-DEC 1
-DEC 1
-DEC 2
-DEC 4
-DEC 4
-DEC 3
-DEC 1
-DEC 3
-DEC 1
-DEC 2
-DEC 4
-DEC 4
-DEC 4
-DEC 3
-DEC 4
-DEC 4
-DEC 3
-DEC 3
-DEC 2
-DEC 3
-DEC 3
-DEC 1
-DEC 2
-DEC 4
-DEC 1
-DEC 4
-DEC 1
-DEC 1
-DEC 3
-DEC 2
-DEC 1
-DEC 1
-DEC 4
-DEC 3
-DEC 2
-DEC 3
-DEC 3
-DEC 2
-DEC 3
-DEC 4
-DEC 2
-DEC 1
-DEC 3
-DEC 3
-DEC 4
-DEC 2
-DEC 2
-DEC 1
-DEC 4
-DEC 3
-DEC 4
-DEC 3
-DEC 3
-DEC 4
+pacmanEntityArray, HEX FB7
+redGhostOriginalLocation, HEX F67
+pinkGhostOriginalLocation, HEX F68
+cyanGhostOriginalLocation, HEX F77
+greenGhostOriginalLocation, HEX F78
+normalPowerUpsLocations, HEX F26
+                     HEX F27
+                     HEX F36
+                     HEX F37
+                     HEX F5A
+                     HEX F5B
+                     HEX F5C
+                     HEX F5D
+                     HEX F7F
+                     HEX F8F
+                     HEX F9F
+                     HEX FAF
+                     HEX FB1
+                     HEX FB2
+                     HEX FB3
+                     HEX FB4
+                     HEX FBA
+                     HEX FBB
+                     HEX FBC
+                     HEX FBD
+                     HEX FC1
+                     HEX FC2
+                     HEX FC3
+                     HEX FC4
+eatOthersPowerUpsLocations, HEX F0F
+                    HEX FE2
+colorLocationArrayForRow, HEX 000
+                     HEX 000
+                     HEX 000
+                     HEX 000
+                     HEX 000
+                     HEX 000
+                     HEX 000
+                     HEX 001F
+                     HEX 001F
+                     HEX 000
+                     HEX 000
+                     HEX 000
+                     HEX 000
+                     HEX 000
+                     HEX 000
+                     HEX F5A0
+                     HEX 000
+                     HEX 000
+                     HEX 001F
+                     HEX 001F
+                     HEX 001F
+                     HEX 000
+                     HEX 000
+                     HEX 001F
+                     HEX 001F
+                     HEX 000
+                     HEX 000
+                     HEX 001F
+                     HEX 001F
+                     HEX 001F
+                     HEX 000
+                     HEX 000
+                     HEX 000
+                     HEX 000
+                     HEX 001F
+                     HEX 000
+                     HEX 001F
+                     HEX 000
+                     HEX FFFF
+                     HEX FFFF
+                     HEX 000
+                     HEX 000
+                     HEX 000
+                     HEX 001F
+                     HEX 000
+                     HEX 001F
+                     HEX 000
+                     HEX 000
+                     HEX 000
+                     HEX 000
+                     HEX 001F
+                     HEX 001F
+                     HEX 001F
+                     HEX 000
+                     HEX FFFF
+                     HEX FFFF
+                     HEX 000
+                     HEX 000
+                     HEX 000
+                     HEX 001F
+                     HEX 001F
+                     HEX 001F
+                     HEX 000
+                     HEX 000
+                     HEX 000
+                     HEX 000
+                     HEX 000
+                     HEX 000
+                     HEX 000
+                     HEX 000
+                     HEX 000
+                     HEX 000
+                     HEX 000
+                     HEX 000
+                     HEX 000
+                     HEX 000
+                     HEX 000
+                     HEX 000
+                     HEX 000
+                     HEX 000
+                     HEX 000
+                     HEX 000
+                     HEX 000
+                     HEX 000
+                     HEX 000
+                     HEX 000
+                     HEX 000
+                     HEX 000
+                     HEX 000
+                     HEX 000
+                     HEX FFFF
+                     HEX FFFF
+                     HEX FFFF
+                     HEX FFFF
+                     HEX 000
+                     HEX 000
+                     HEX 000
+                     HEX 000
+                     HEX 000
+                     HEX 001F
+                     HEX 000
+                     HEX 000
+                     HEX 000
+                     HEX F08A
+                     HEX FDDC
+                     HEX 000
+                     HEX 000
+                     HEX 000
+                     HEX 000
+                     HEX 000
+                     HEX 000
+                     HEX 000
+                     HEX 000
+                     HEX 000
+                     HEX 000
+                     HEX 001F
+                     HEX 000
+                     HEX 000
+                     HEX 000
+                     HEX 1BFE
+                     HEX 0F00
+                     HEX 000
+                     HEX 000
+                     HEX 000
+                     HEX 001F
+                     HEX 000
+                     HEX 000
+                     HEX FFFF
+                     HEX 000
+                     HEX 000
+                     HEX 001F
+                     HEX 001F
+                     HEX 000
+                     HEX 000
+                     HEX 000
+                     HEX 000
+                     HEX 000
+                     HEX 000
+                     HEX 000
+                     HEX 000
+                     HEX 001F
+                     HEX 000
+                     HEX 000
+                     HEX FFFF
+                     HEX 000
+                     HEX 000
+                     HEX 000
+                     HEX 000
+                     HEX 000
+                     HEX 000
+                     HEX 000
+                     HEX 000
+                     HEX 000
+                     HEX 000
+                     HEX 000
+                     HEX 000
+                     HEX 001F
+                     HEX 001F
+                     HEX 000
+                     HEX FFFF
+                     HEX 000
+                     HEX 000
+                     HEX 000
+                     HEX 000
+                     HEX 000
+                     HEX 000
+                     HEX 000
+                     HEX 000
+                     HEX 000
+                     HEX 000
+                     HEX 000
+                     HEX 000
+                     HEX 000
+                     HEX 000
+                     HEX 000
+                     HEX FFFF
+                     HEX 000
+                     HEX FFFF
+                     HEX FFFF
+                     HEX FFFF
+                     HEX FFFF
+                     HEX 000
+                     HEX 000
+                     HEX 6767
+                     HEX 000
+                     HEX 000
+                     HEX FFFF
+                     HEX FFFF
+                     HEX FFFF
+                     HEX FFFF
+                     HEX 000
+                     HEX 000
+                     HEX 000
+                     HEX FFFF
+                     HEX FFFF
+                     HEX FFFF
+                     HEX FFFF
+                     HEX 000
+                     HEX 000
+                     HEX 000
+                     HEX 000
+                     HEX 000
+                     HEX 000
+                     HEX 000
+                     HEX 000
+                     HEX 000
+                     HEX 000
+                     HEX 000
+                     HEX 000
+                     HEX 000
+                     HEX 000
+                     HEX 000
+                     HEX 000
+                     HEX 000
+                     HEX 000
+                     HEX 000
+                     HEX 000
+                     HEX 000
+                     HEX 000
+                     HEX 000
+                     HEX 000
+                     HEX 000
+                     HEX 000
+                     HEX 000
+                     HEX 000
+                     HEX 000
+                     HEX F5A0
+                     HEX 000
+                     HEX 000
+                     HEX 000
+                     HEX 000
+                     HEX 001F
+                     HEX 001F
+                     HEX 000
+                     HEX 000
+                     HEX 000
+                     HEX 000
+                     HEX 000
+                     HEX 000
+                     HEX 000
+                     HEX 000
+                     HEX 000
+                     HEX 000
+                     HEX 000
+                     HEX 000
+                     HEX 000
+                     HEX 000
+                     HEX 001F
+                     HEX 001F
+                     HEX 000
+                     HEX 000
+                     HEX 000
+                     HEX 000
+                     HEX 000
+                     HEX 000
+                     HEX 000
+movementListValues, DEC 3
+                    DEC 2
+                    DEC 2
+                    DEC 3
+                    DEC 2
+                    DEC 1
+                    DEC 4
+                    DEC 4
+                    DEC 3
+                    DEC 3
+                    DEC 4
+                    DEC 3
+                    DEC 3
+                    DEC 3
+                    DEC 1
+                    DEC 3
+                    DEC 4
+                    DEC 4
+                    DEC 3
+                    DEC 2
+                    DEC 1
+                    DEC 2
+                    DEC 3
+                    DEC 1
+                    DEC 4
+                    DEC 3
+                    DEC 4
+                    DEC 4
+                    DEC 2
+                    DEC 3
+                    DEC 4
+                    DEC 2
+                    DEC 2
+                    DEC 4
+                    DEC 1
+                    DEC 4
+                    DEC 2
+                    DEC 4
+                    DEC 2
+                    DEC 4
+                    DEC 3
+                    DEC 1
+                    DEC 1
+                    DEC 4
+                    DEC 4
+                    DEC 2
+                    DEC 4
+                    DEC 2
+                    DEC 4
+                    DEC 2
+                    DEC 1
+                    DEC 4
+                    DEC 2
+                    DEC 2
+                    DEC 4
+                    DEC 1
+                    DEC 4
+                    DEC 2
+                    DEC 1
+                    DEC 2
+                    DEC 1
+                    DEC 2
+                    DEC 3
+                    DEC 1
+                    DEC 1
+                    DEC 1
+                    DEC 2
+                    DEC 2
+                    DEC 4
+                    DEC 4
+                    DEC 3
+                    DEC 4
+                    DEC 2
+                    DEC 2
+                    DEC 1
+                    DEC 2
+                    DEC 1
+                    DEC 2
+                    DEC 1
+                    DEC 4
+                    DEC 2
+                    DEC 4
+                    DEC 1
+                    DEC 3
+                    DEC 4
+                    DEC 1
+                    DEC 1
+                    DEC 3
+                    DEC 2
+                    DEC 1
+                    DEC 2
+                    DEC 1
+                    DEC 1
+                    DEC 2
+                    DEC 1
+                    DEC 3
+                    DEC 4
+                    DEC 3
+                    DEC 3
+                    DEC 1
