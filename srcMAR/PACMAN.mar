@@ -12,6 +12,87 @@ IniciarJuego, LoadI IndexColores
 			Subt Limite
 			SkipCond 800
 			Jump IniciarJuego		
+obtenerColumnaFila, Clear
+					Store esPacman
+					Store esRojo
+					Store esRosado
+					Store esTurquesa
+					Store esVerde
+					Load ContadorEntity
+					Add Uno
+					Store ContadorEntity
+					LoadI IndexEntityArray
+					Store EntityActAux
+					Store EntityActual
+					Store EntityAntiguo
+					Subt base
+					Store pos
+					JnS extractVariables
+					Jump VerificarPacman
+extractVariables, HEX 000
+				 JnS moduloOperation
+				 Load numHlpr
+				 Store CoordenadaEntityColumnaActual
+				 Store CoordenadaEntityColumnaAnterior
+				 JnS divisionOperator
+				 Load counter
+				 Store CoordenadaEntityFilaActual
+				 Store CoordenadaEntityFilaAnterior
+				 JumpI extractVariables
+				 
+moduloOperation, HEX 000
+		Load pos
+		Store numHlpr
+		whileHigherThanZero, Load numHlpr
+							 Subt CONST_TEN
+							 SkipCond 800
+							 JumpI moduloOperation
+							 Store numHlpr
+							 Jump whileHigherThanZero	
+divisionOperator, HEX 000
+Load pos
+Store numHlpr
+Load CONST_ZERO
+Store counter
+		whileNotZero, load numHlpr 
+		  				Subt CONST_TEN
+		  				SkipCond 800
+						JumpI divisionOperator
+						Store numHlpr
+						Load counter
+						Add Uno
+						Store counter	
+						Jump whileNotZero
+VerificarPacman, Load ContadorEntity
+				Subt Uno
+				SkipCond 400
+				Jump VerificarTurquesa
+				Load Uno
+				Store esPacman
+				Jump LoopMovimientos
+VerificarTurquesa, Load ContadorEntity
+					Subt Dos
+					SkipCond 400
+					Jump VerificarRojo
+					Load Uno
+					Store esTurquesa
+					Jump LoopMovimientos
+VerificarRojo, Load ContadorEntity
+					Subt Tres
+					SkipCond 400
+					Jump VerificarVerde
+					Load Uno
+					Store esRojo
+					Jump LoopMovimientos
+VerificarVerde, Load ContadorEntity
+					Subt Cuatro
+					SkipCond 400
+					Jump VerificarRosado
+					Load Uno
+					Store esVerde
+					Jump LoopMovimientos						
+VerificarRosado,	Load Uno
+					Store esRosado
 LoopMovimientos, Load i
 				Add Uno
 				Store i
@@ -23,124 +104,263 @@ RevisarDerecha, LoadI IndexMovement
 				Subt Derecha
 				SkipCond 400
 				Jump RevisarArriba
-				Load PacmanActual
+				Load EntityActual
 				Add Uno
-				Store PacmanActual
-				Load CoordenadaPACMANColumnaActual
+				Store EntityActual
+				Load CoordenadaEntityColumnaActual
 				Add Uno
-				Store CoordenadaPACMANColumnaActual
+				Store CoordenadaEntityColumnaActual
 				Jump RevisarCoordenadaColumnaDerecha
 RevisarArriba, LoadI IndexMovement
 				Subt Arriba
 				SkipCond 400
 				Jump RevisarIzquierda
-				Load PacmanActual
+				Load EntityActual
 				Subt DeisSeis
-				Store PacmanActual
-				Load CoordenadaPACMANFilaActual
+				Store EntityActual
+				Load CoordenadaEntityFilaActual
 				Subt Uno
-				Store CoordenadaPACMANFilaActual
+				Store CoordenadaEntityFilaActual
 				Jump RevisarCoordenadaColumnaDerecha
 RevisarIzquierda,LoadI IndexMovement
 				Subt Izquierda
 				SkipCond 400
 				Jump RevisarAbajo
-				Load PacmanActual
+				Load EntityActual
 				Subt Uno
-				Store PacmanActual
-				Load CoordenadaPACMANColumnaActual
+				Store EntityActual
+				Load CoordenadaEntityColumnaActual
 				Subt Uno
-				Store CoordenadaPACMANColumnaActual
+				Store CoordenadaEntityColumnaActual
 				Jump RevisarCoordenadaColumnaDerecha
 RevisarAbajo, LoadI IndexMovement
 				Subt Abajo
 				SkipCond 400 
 				Jump LoopMovimientos
-				Load PacmanActual
+				Load EntityActual
 				Add DeisSeis
-				Store PacmanActual
-				Load CoordenadaPACMANFilaActual
+				Store EntityActual
+				Load CoordenadaEntityFilaActual
 				Add Uno
-				Store CoordenadaPACMANFilaActual
-RevisarCoordenadaColumnaDerecha, Load CoordenadaPACMANColumnaActual
+				Store CoordenadaEntityFilaActual
+RevisarCoordenadaColumnaDerecha, Load CoordenadaEntityColumnaActual
 						Subt LimiteDisplay
 						SkipCond 800
 						Jump RevisarCoordenadaColumnaIzquierda
-						Load PacmanActual
+						Load EntityActual
 						Subt DeisSeis
-						Store PacmanActual
+						Store EntityActual
 						Clear
-						Store CoordenadaPACMANColumnaActual
+						Store CoordenadaEntityColumnaActual
 						Jump RevisarAzul
-RevisarCoordenadaColumnaIzquierda, Load CoordenadaPACMANColumnaActual
+RevisarCoordenadaColumnaIzquierda, Load CoordenadaEntityColumnaActual
 						SkipCond 000
 						Jump RevisarCoordenadaFilaAbajo
-						Load PacmanActual
+						Load EntityActual
 						Add DeisSeis
-						Store PacmanActual
+						Store EntityActual
 						Load LimiteDisplay
-						Store CoordenadaPACMANColumnaActual
+						Store CoordenadaEntityColumnaActual
 						Jump RevisarAzul  		
-RevisarCoordenadaFilaAbajo, Load CoordenadaPACMANFilaActual
+RevisarCoordenadaFilaAbajo, Load CoordenadaEntityFilaActual
 						Subt LimiteDisplay
 						SkipCond 800
 						Jump RevisarCoordenadaFilaArriba
-						Load PacmanActual
+						Load EntityActual
 						Subt DosCincoSeis
-						Store PacmanActual
+						Store EntityActual
 						Clear
-						Store CoordenadaPACMANFilaActual
+						Store CoordenadaEntityFilaActual
 						Jump RevisarAzul						
-RevisarCoordenadaFilaArriba, Load CoordenadaPACMANFilaActual
+RevisarCoordenadaFilaArriba, Load CoordenadaEntityFilaActual
 						SkipCond 000
 						Jump RevisarAzul
-						Load PacmanActual
+						Load EntityActual
 						Add DosCincoSeis
-						Store PacmanActual
+						Store EntityActual
 						Load LimiteDisplay
-						Store CoordenadaPACMANFilaActual
-RevisarAzul, LoadI PacmanActual
+						Store CoordenadaEntityFilaActual
+RevisarAzul, LoadI EntityActual
 			Subt Azul
 			SkipCond 400
 			Jump Mover
-			Load PacmanAntiguo
-			Store PacmanActual
-			Load CoordenadaPACMANColumnaAnterior
-			Store CoordenadaPACMANColumnaActual
-			Load CoordenadaPACMANFilaAnterior
-			Store CoordenadaPACMANFilaActual
-			Jump IndexMovimientoMasUno
-Mover, 	LoadI PacmanActual
-		Store PacmanActAux
-		Load Negro
-		StoreI PacmanAntiguo
-		Load Amarillo
-		StoreI PacmanActual
-		Load PacmanActual
-		Store PacmanAntiguo
-		Load CoordenadaPACMANColumnaActual
-		Store CoordenadaPACMANColumnaAnterior
-		Load CoordenadaPACMANFilaActual
-		Store CoordenadaPACMANFilaAnterior
-		Load PacmanActAux
-		Subt Moneda
+			Load EntityAntiguo
+			Store EntityActual
+			Load CoordenadaEntityColumnaAnterior
+			Store CoordenadaEntityColumnaActual
+			Load CoordenadaEntityFilaAnterior
+			Store CoordenadaEntityFilaActual
+			Jump NextMovementAzul
+Mover,	Load esPacman
+		Subt Uno
 		SkipCond 400
-		Jump IndexMovimientoMasUno	
-		Jump SumarMoneda
-IndexMovimientoMasUno, Load IndexMovement
+		Jump VerifyTurquesa
+		Jump PintarAmarillo
+PintarAmarillo, LoadI EntityActual
+				Store EntityActAux	
+				Load Negro
+				StoreI EntityAntiguo
+				Load Amarillo
+				StoreI EntityActual
+				JnS ActualizarIndexEntity
+				Load EntityActAux
+				Subt Moneda
+				SkipCond 400
+				Jump IndexMovimientoMasUno	
+				Jump SumarMoneda
+VerifyTurquesa, Load esTurquesa
+				Subt Uno
+				SkipCond 400
+				Jump VerifyRojo
+PintarTurquesa, LoadI EntityActual
+				Store ColorTemp
+				LoadI IndexColorAnterior
+				StoreI EntityAntiguo
+				Load Turquesa
+				StoreI EntityActual
+				JnS ActualizarIndexEntity
+				Jump IndexMovimientoMasUno
+VerifyRojo, Load esRojo
+			Subt Uno
+			SkipCond 400
+			Jump VerifyVerde
+PintarRojo,  LoadI EntityActual
+			Store ColorTemp
+			LoadI IndexColorAnterior
+			StoreI EntityAntiguo
+			Load Rojo
+			StoreI EntityActual
+			JnS ActualizarIndexEntity
+			Jump IndexMovimientoMasUno
+VerifyVerde, Load esVerde
+			Subt Uno
+			SkipCond 400
+			Jump PintarRosado
+PintarVerde, LoadI EntityActual
+			Store ColorTemp  
+			LoadI IndexColorAnterior
+			StoreI EntityAntiguo
+			Load Verde
+			StoreI EntityActual
+			JnS ActualizarIndexEntity
+			Jump IndexMovimientoMasUno
+PintarRosado,   LoadI EntityActual
+				Store ColorTemp
+			LoadI IndexColorAnterior
+			StoreI EntityAntiguo
+			Load Rosado
+			StoreI EntityActual
+			JnS ActualizarIndexEntity
+			Jump IndexMovimientoMasUno
+ActualizarIndexEntity, HEX 000
+				Load EntityActual
+				StoreI IndexEntityArray
+				Load IndexEntityArray
+				Add Uno
+				Store IndexEntityArray
+				JumpI ActualizarIndexEntity
+NextMovementAzul, Load IndexMovement
+				Add Uno
+				Store IndexMovement
+				Jump LoopMovimientos				
+IndexMovimientoMasUno, Load esPacman
+						Subt Uno
+						SkipCond 000
+						Jump RebuildEntities
+						Load IndexMovement
 						Add Uno
 						Store IndexMovement
-						Jump LoopMovimientos
+						Load ColorTemp
+						Subt Moneda
+						SkipCond 400
+						Jump RevisionNaranja
+						Jump GuadarColor
+RevisionNaranja, Load ColorTemp
+				Subt Naranja
+				SkipCond 400
+				Jump RevisionNegro
+				Jump GuadarColor
+RevisionNegro, Load ColorTemp
+				SkipCond 400
+				Jump MoveIndexColor
+				Jump GuadarColor
+GuadarColor, Load ColorTemp
+			StoreI IndexColorAnterior
+MoveIndexColor,	Load esRosado
+				Subt Uno
+				SkipCond 000
+				Jump ReiniciarLoopEntity
+				Load IndexColorAnterior
+				Add Uno
+				Store IndexColorAnterior
+				Jump RebuildEntities
+ReiniciarLoopEntity, Load IndexEntityArrayInicio
+					Store IndexEntityArray
+					Clear
+					Store ContadorEntity
+					Load IndexColorAnteriorInicio
+					Store IndexColorAnterior			
+RebuildEntities, LoadI IndexEntityArrayCopia
+				Store LocationTemp
+				Load Amarillo
+				StoreI LocationTemp
+				Load IndexEntityArrayCopia
+				Add Uno
+				Store IndexEntityArrayCopia
+				LoadI IndexEntityArrayCopia
+				Store LocationTemp
+				Load Turquesa
+				StoreI LocationTemp
+				Load IndexEntityArrayCopia
+				Add Uno
+				Store IndexEntityArrayCopia
+				LoadI IndexEntityArrayCopia
+				Store LocationTemp
+				Load Rojo
+				StoreI LocationTemp
+				Load IndexEntityArrayCopia
+				Add Uno
+				Store IndexEntityArrayCopia
+				LoadI IndexEntityArrayCopia
+				Store LocationTemp
+				Load Verde
+				StoreI LocationTemp
+				Load IndexEntityArrayCopia
+				Add Uno
+				Store IndexEntityArrayCopia
+				LoadI IndexEntityArrayCopia
+				Store LocationTemp
+				Load Rosado
+				StoreI LocationTemp
+				Load IndexEntityArrayInicio
+				Store IndexEntityArrayCopia
+				Jump obtenerColumnaFila
 SumarMoneda, Load Puntos
              Add Uno
              Store Puntos
 			 Output 
              Jump IndexMovimientoMasUno
+
+					
+
 End, Halt
+pos, HEX 000
+numHlpr, HEX 000
+CONST_ZERO, DEC 0
+CONST_TEN, HEX 10
+counter, DEC 0
+esPacman, DEC 0
+esTurquesa, DEC 0
+esRojo, DEC 0
+esVerde, DEC 0
+esRosado, DEC 0
 i, DEC 0
 Limite, DEC 255
 LimiteDisplay, DEC 15
 Uno, DEC 1
+Dos, DEC 2
+Tres, DEC 3
+Cuatro, DEC 4
 Contador, DEC 0
 Puntos, DEC 0 
 Derecha, DEC 1
@@ -149,25 +369,45 @@ Izquierda, DEC 3
 Abajo, DEC 4
 DeisSeis, DEC 16
 DosCincoSeis, DEC 256
-Amarillo, HEX 7FE0
+Amarillo, HEX 6767
+Turquesa, HEX 1BFE
+Rojo, HEX F08A
+Verde, HEX 0F00
+Rosado, Hex FDDC
 Azul, HEX 001F
 Negro, HEX 0000
+Naranja, HEX F5A0
 Moneda, HEX FFFF
 Cien, DEC 100
 IndexDisplay, Hex F00
-IndexColores, HEX 0C7
-IndexMovement, HEX 1C7
-CoordenadaPACMANFilaInicial, DEC 11
-CoordenadaPACMANFilaActual, DEC 11
-CoordenadaPACMANFilaAnterior, DEC 11
-CoordenadaPACMANColumnaInicial, DEC 7
-CoordenadaPACMANColumnaActual, DEC 7
-CoordenadaPACMANColumnaAnterior, DEC 7
-PacmanActual, HEX FB7
-PacmanActAux, HEX FB7
-PacmanAntiguo, HEX FB7
-
-pacmanEntityArray, HEX FB7
+base, HEX F00
+IndexColores, HEX 1B4
+IndexMovement, HEX 2B4
+CoordenadaEntityFilaActual, DEC 0
+CoordenadaEntityFilaAnterior, DEC 0
+CoordenadaEntityColumnaActual, DEC 0
+CoordenadaEntityColumnaAnterior, DEC 0
+EntityActual, HEX 000
+EntityActAux, HEX 000
+EntityAntiguo, HEX 000
+LocationTemp, HEX 000
+ContadorEntity, DEC 0
+IndexEntityArray, HEX 189
+IndexEntityArrayCopia, HEX 189
+IndexEntityArrayInicio, Hex 189
+EntityArray, HEX FB7
+			HEX F77
+			HEX F67
+			HEX F78
+			HEX F68
+ColorTemp, HEX 000
+IndexColorAnterior, HEX 191
+IndexColorAnteriorInicio, HEX 191
+ColorAnteriorArray, Hex 000
+					Hex 000
+					Hex 000
+					Hex 000
+pacmanOriginalLocation, HEX FB7
 redGhostOriginalLocation, HEX F67
 pinkGhostOriginalLocation, HEX F68
 cyanGhostOriginalLocation, HEX F77
