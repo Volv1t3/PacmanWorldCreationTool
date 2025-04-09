@@ -1,282 +1,412 @@
-IniciarJuego, LoadI IndexColores
-			StoreI IndexDisplay
-			Load IndexDisplay
-			Add Uno
-			Store IndexDisplay
-			Load IndexColores
-			Add Uno
-			Store IndexColores
-			Load Contador
-			Add Uno
-			Store Contador
-			Subt Limite
-			SkipCond 800
-			Jump IniciarJuego		
-obtenerColumnaFila, Clear
-					Store esPacman
-					Store esRojo
-					Store esRosado
-					Store esTurquesa
-					Store esVerde
-					Load ContadorEntity
-					Add Uno
-					Store ContadorEntity
-					LoadI IndexEntityArray
-					Store EntityActAux
-					Store EntityActual
-					Store EntityAntiguo
-					Subt base
-					Store pos
-					JnS extractVariables
-					Jump VerificarPacman
-extractVariables, HEX 000
-				 JnS moduloOperation
-				 Load numHlpr
-				 Store CoordenadaEntityColumnaActual
-				 Store CoordenadaEntityColumnaAnterior
-				 JnS divisionOperator
-				 Load counter
-				 Store CoordenadaEntityFilaActual
-				 Store CoordenadaEntityFilaAnterior
-				 JumpI extractVariables
-				 
-moduloOperation, HEX 000
-		Load pos
-		Store numHlpr
-		whileHigherThanZero, Load numHlpr
-							 Subt CONST_TEN
-							 SkipCond 800
-							 JumpI moduloOperation
-							 Store numHlpr
-							 Jump whileHigherThanZero	
-divisionOperator, HEX 000
-Load pos
-Store numHlpr
-Load CONST_ZERO
-Store counter
-		whileNotZero, load numHlpr 
-		  				Subt CONST_TEN
-		  				SkipCond 800
-						JumpI divisionOperator
-						Store numHlpr
-						Load counter
-						Add Uno
-						Store counter	
-						Jump whileNotZero
-VerificarPacman, Load ContadorEntity
-				Subt Uno
-				SkipCond 400
-				Jump VerificarTurquesa
-				Load Uno
-				Store esPacman
-				Jump LoopMovimientos
-VerificarTurquesa, Load ContadorEntity
-					Subt Dos
-					SkipCond 400
-					Jump VerificarRojo
-					Load Uno
-					Store esTurquesa
-					Jump LoopMovimientos
-VerificarRojo, Load ContadorEntity
-					Subt Tres
-					SkipCond 400
-					Jump VerificarVerde
-					Load Uno
-					Store esRojo
-					Jump LoopMovimientos
-VerificarVerde, Load ContadorEntity
-					Subt Cuatro
-					SkipCond 400
-					Jump VerificarRosado
-					Load Uno
-					Store esVerde
-					Jump LoopMovimientos						
-VerificarRosado,	Load Uno
-					Store esRosado
-LoopMovimientos, Load i
-				Add Uno
-				Store i
-				Subt Cien
-				SkipCond 800
-				Jump RevisarDerecha
-				Jump End
-RevisarDerecha, LoadI IndexMovement
-				Subt Derecha
-				SkipCond 400
-				Jump RevisarArriba
-				Load EntityActual
-				Add Uno
-				Store EntityActual
-				Load CoordenadaEntityColumnaActual
-				Add Uno
-				Store CoordenadaEntityColumnaActual
-				Jump RevisarCoordenadaColumnaDerecha
-RevisarArriba, LoadI IndexMovement
-				Subt Arriba
-				SkipCond 400
-				Jump RevisarIzquierda
-				Load EntityActual
-				Subt DeisSeis
-				Store EntityActual
-				Load CoordenadaEntityFilaActual
-				Subt Uno
-				Store CoordenadaEntityFilaActual
-				Jump RevisarCoordenadaColumnaDerecha
-RevisarIzquierda,LoadI IndexMovement
-				Subt Izquierda
-				SkipCond 400
-				Jump RevisarAbajo
-				Load EntityActual
-				Subt Uno
-				Store EntityActual
-				Load CoordenadaEntityColumnaActual
-				Subt Uno
-				Store CoordenadaEntityColumnaActual
-				Jump RevisarCoordenadaColumnaDerecha
-RevisarAbajo, LoadI IndexMovement
-				Subt Abajo
-				SkipCond 400 
-				Jump LoopMovimientos
-				Load EntityActual
-				Add DeisSeis
-				Store EntityActual
-				Load CoordenadaEntityFilaActual
-				Add Uno
-				Store CoordenadaEntityFilaActual
-RevisarCoordenadaColumnaDerecha, Load CoordenadaEntityColumnaActual
-						Subt LimiteDisplay
-						SkipCond 800
-						Jump RevisarCoordenadaColumnaIzquierda
-						Load EntityActual
-						Subt DeisSeis
-						Store EntityActual
-						Clear
-						Store CoordenadaEntityColumnaActual
-						Jump RevisarAzul
-RevisarCoordenadaColumnaIzquierda, Load CoordenadaEntityColumnaActual
-						SkipCond 000
-						Jump RevisarCoordenadaFilaAbajo
-						Load EntityActual
-						Add DeisSeis
-						Store EntityActual
-						Load LimiteDisplay
-						Store CoordenadaEntityColumnaActual
-						Jump RevisarAzul  		
-RevisarCoordenadaFilaAbajo, Load CoordenadaEntityFilaActual
-						Subt LimiteDisplay
-						SkipCond 800
-						Jump RevisarCoordenadaFilaArriba
-						Load EntityActual
-						Subt DosCincoSeis
-						Store EntityActual
-						Clear
-						Store CoordenadaEntityFilaActual
-						Jump RevisarAzul						
+/*Recreacion de Pac-man en MARIEJS - Organizacion de Computadores - Felipe Grijalva - USFQ*/
+/*Integrantes del Grupo: [Felipe Rodriguez {00330528}, Josue Ponce {00330341}, Santiago Arellano {00328370}]*/
+
+
+/* Loop principal de la aplicacion. Este metodo se encarga de manejar la inicializacion de la pantalla a traves de la carga de variables 
+/* como IndexColores , IndexDisplay, y Contador
+/* @param IndexColores: apunta al inicio de nuestro arreglo de colores
+/* @param IndexDisplay:  apunta al index de la primera posicion del display
+/* @param Contador:  permite contador la cantidad de colores que se deben cargar (256 casilleros).
+intMainLoopLoadGame, Clear
+					 JnS cargaDeMapaYEntidadesAlDisplay
+					 Load CONST_ONE
+					 /*Regresamos counter a cero para siguiente uso*/
+					 Load CONST_ZERO
+					 Store Counter
+					 JnS whileLivesAreHigherThanZero
+					 Load CONST_ONE
+					 Halt
+
+/*Loop principal de la partida, la idea de este metodo es mantener el estado del juego mientras pacman tenga vidas, reiniciando el 
+/* puntero hacia el mapa de carga de los movimientos mientras pacman no haya sufrido cinco golpes de un fantasma que lo maten. Para esto, el metodo 
+/* revisa las vidas constantemente, registrando que si existen todavia vidas, el programa difurca a varios metodos de control para reiniciar los movimientos 
+/* si fuera necesario. En este caso, si tenemos vidas suficientes, no saltamos fuera del ciclo y seguimos 
+/* iterando sobre todos los datos del sistema. Para el analisis del juego, pasamos a un metodo interno llamado 
+/* internalGeneralMovementAndLogicLoops, encargado de difurcar la ejecucion del codigo dependiendo de las 
+/* condiciones internas
+/* @param ContadorDeVidas: contador de vidas de pacmkan, tiene un valor estandar de cinco
+/* @param CONST_ONE: constante numerica de valor uno 
+whileLivesAreHigherThanZero, HEX 000
+							 whileTrue, Clear
+										Load ContadorDeVidas
+										Subt CONST_ONE
+										SkipCond 800 /*Saltamos si llegamos a cero
+										JumpI whileLivesAreHigherThanZero
+										/*Si tenemos vidas todavia, pasamos a la logica principal 
+										/* que nos permite continuar la ejecucion
+										JnS internalGeneralMovementAndLogicLoops
+										Load CONST_ONE
+										JnS reviewIfMovementResetIsNeeded
+										Load CONST_ONE
+										
+										
+										Jump whileTrue
+										 
+
+/* Loop interno, secundario pero crucial para el manejo de metodos de validacion de movimientos, de vidas, llamadas a
+/* metodos de validacion de datos, etc. Este bloque se realiza mientras el valor del Contador no llegue a 100, en cuyo caso
+/* reiniciamos el contador en el 
+internalGeneralMovementAndLogicLoops, HEX 000
+/* Para realizar este metodo, debemos primero revisar que entidad es la que estamos analizando, y conocinedo esto debemos de calcular la 
+/* columna y la fila en la que esta entidad se encuentra.
+									  /*Dentro de la architectura de nuestro juego, vamos a iterar sobre los 
+									  /*movimientos permitidos en el arreglo y dentro de estos realizamos 
+									  /*validaciones, etc*/
+									 
+									  Load CONST_ZERO
+									  Store Counter
+									  whileMovementsAreNotOneHundred, Load ContadorMovimientosRealizadosEnDecimal
+									  								  Add CONST_ONE
+																	  Store ContadorMovimientosRealizadosEnDecimal
+																	   Load CONST_ONE_HUNDRED
+																	   Subt ContadorMovimientosRealizadosEnDecimal
+																	   SkipCond 800
+																		JumpI internalGeneralMovementAndLogicLoops
+																	   
+																	   
+																	  /*Podemos realizar validaciones y calculos*/
+																	  /*pero para movernos realizamos revision de */
+																	  /*contadores*/
+																	  // Enceramos todos los valores booleanos
+																	   JnS obtenerColumnaYFila
+																 	   Load CONST_ONE
+
+																	   // Verificamos que figura estamos trabajando
+																	   JnS verificarEntidadEsPacman
+																	   Load CONST_ONE
+
+																	   //Revisamos si tenemos movimientos, si no 
+																	   // regresamos directamente al main con la
+																	   // llamada JumpI al JnS
+																	   // Si tenemos un valor negativo (hay movimientos) 
+																	   // entonces el metodo entra al review logic y realiza 
+																	   // los movimientos
+																	   Load ContadorMovimientosRealizadosEnDecimal
+																	   Subt CONST_ONE_HUNDRED
+																	   SkipCond 800
+																	   JnS internalMovementRevisionLogic
+																	   Load CONST_ONE
+
+																	   // Luego de la revision de colisiones, realizamos un movimiento!
+																	   JnS internallyMoveAnEntity
+																	   Load CONST_ONE
+																	  
+																	   // Luego de revisar si tenemos movimientos, revisamos
+																	   // si tenemos movimientos para saltar al loop
+																	   Jump whileMovementsAreNotOneHundred
+																	  
+																		   
+									  
+internalMovementRevisionLogic, HEX 000
+							   // En primera instancia procedemos a revisar derecha, al igual que los 
+							   // metodos anteriores, si la logica se ejecuta, saltamos hacia la direccion 
+							   // del JnS 
+							   LoadI IndexPointerToMovementArray
+							   Subt CONST_MOVIMIENTO_DERECHA
+							   SkipCond 400
+							   JnS internallyReviewIfTopIsFree
+							   Load CONST_ONE 
+							   // Realizamos la logica
+							   Load PosicionHexadecimalEntidadActual
+							   Add CONST_ONE
+							   Store PosicionHexadecimalEntidadActual
+
+							   Load CoordenadaEntityColumnaActual
+							   Add CONST_ONE
+							   Store CoordenadaEntityColumnaActual
+							   JnS internallyReviewCollisionsWithBoundaries
+							   Load CONST_ONE
+							   JumpI internalMovementRevisionLogic
+
+internallyReviewIfTopIsFree, HEX 000
+							  // Revisamos el movimiento
+							  LoadI IndexPointerToMovementArray
+							  Subt CONST_MOVIMIENTO_ARRIBA
+							  SkipCond 400
+							  JnS internalllyReviewIfLeftIsFree
+							  Load CONST_ONE
+
+							  // Realizamos la logica
+							  Load PosicionHexadecimalEntidadActual
+							  Subt CONST_SIXTEEN
+							  Store PosicionHexadecimalEntidadActual
+
+							  Load CoordenadaEntityFilaActual
+							  Subt CONST_ONE
+							  Store CoordenadaEntityFilaActual
+
+							  // Revisamos colisiones
+							  JnS internallyReviewCollisionsWithBoundaries
+							  Load CONST_ONE
+							  JumpI internalMovementRevisionLogic
+							  
+internalllyReviewIfLeftIsFree, HEX 000
+							   // Revisamos el movimiento
+							   LoadI IndexPointerToMovementArray
+							   Subt CONST_MOVIMIENTO_IZQUIERDA
+							   SkipCond 400
+							   JnS internallyReviewIfBottomIsFree
+							   Load CONST_ONE
+
+							   //Realizamos la logica
+							   Load PosicionHexadecimalEntidadActual
+							   Subt CONST_ONE
+							   Store PosicionHexadecimalEntidadActual
+
+							   Load CoordenadaEntityColumnaActual
+							   Subt CONST_ONE
+							   Store CoordenadaEntityColumnaActual
+
+							   JnS internallyReviewCollisionsWithBoundaries
+							   Load CONST_ONE
+							   JnS internalBlueBorderColisionDetection
+							   Load CONST_ONE
+							   JumpI internalMovementRevisionLogic
+
+internallyReviewIfBottomIsFree, HEX 000
+								// Revisamos el moviomiento final
+								LoadI IndexPointerToMovementArray
+								Subt CONST_MOVIMIENTO_ABAJO
+								SkipCond 400
+								Jump whileMovementsAreNotOneHundred //Regresamos al loop de movimientos original
+
+								Load PosicionHexadecimalEntidadActual
+								Add CONST_SIXTEEN
+								Store PosicionHexadecimalEntidadActual
+
+								Load CoordenadaEntityFilaActual
+								Add CONST_ONE
+								Store CoordenadaEntityColumnaActual
+
+								JnS internallyReviewCollisionsWithBoundaries
+								Load CONST_ONE
+								JumpI internalMovementRevisionLogic
+							   
+
+/*Metodo que permite difurcar la revision de colisiones, la idea es tener una estructura similar al proceso anterior, difurcando en varias JnS calls
+/* para validar las colisiones del movimiento
+internallyReviewCollisionsWithBoundaries, HEX 000
+										  Load CoordenadaEntityColumnaActual
+										  Subt CONST_DISPLAY_LIMIT
+										  SkipCond 800
+										  Jump RevisarCoordenadaColumnaIzquierda
+										  Load PosicionHexadecimalEntidadActual
+										  Subt CONST_SIXTEEN
+										  Store PosicionHexadecimalEntidadActual
+										  Clear
+										  Store CoordenadaEntityColumnaActual
+										  JumpI internallyReviewCollisionsWithBoundaries
+RevisarCoordenadaColumnaIzquierda, Clear
+								   Load CoordenadaEntityColumnaActual
+								   SkipCond 000
+								   Jump RevisarCoordenadaFilaAbajo
+								   Load PosicionHexadecimalEntidadActual
+								   Add CONST_SIXTEEN
+								   Store PosicionHexadecimalEntidadActual
+								   Load CONST_SIXTEEN
+								   Store CoordenadaEntityColumnaActual
+								   JumpI internallyReviewCollisionsWithBoundaries
+								   
+RevisarCoordenadaFilaAbajo, Clear
+							Load CoordenadaEntityFilaActual
+							Subt CONST_DISPLAY_LIMIT
+							SkipCond 800
+							Jump RevisarCoordenadaFilaArriba
+							Load PosicionHexadecimalEntidadActual
+							Subt CONST_TWO_FIFTY_SIX
+							Store PosicionHexadecimalEntidadActual
+							Clear
+							Store CoordenadaEntityFilaActual
+							JumpI internallyReviewCollisionsWithBoundaries
+
 RevisarCoordenadaFilaArriba, Load CoordenadaEntityFilaActual
 						SkipCond 000
-						Jump RevisarAzul
-						Load EntityActual
-						Add DosCincoSeis
-						Store EntityActual
-						Load LimiteDisplay
+						Jump internalBlueBorderColisionDetection
+						Load PosicionHexadecimalEntidadActual
+						Add CONST_TWO_FIFTY_SIX
+						Store PosicionHexadecimalEntidadActual
+						Load CONST_DISPLAY_LIMIT
 						Store CoordenadaEntityFilaActual
-RevisarAzul, LoadI EntityActual
-			Subt Azul
-			SkipCond 400
-			Jump Mover
-			Load EntityAntiguo
-			Store EntityActual
-			Load CoordenadaEntityColumnaAnterior
-			Store CoordenadaEntityColumnaActual
-			Load CoordenadaEntityFilaAnterior
-			Store CoordenadaEntityFilaActual
-			Jump NextMovementAzul
-Mover,	Load esPacman
-		Subt Uno
-		SkipCond 400
-		Jump VerifyTurquesa
-		Jump PintarAmarillo
-PintarAmarillo, LoadI EntityActual
-				Store EntityActAux	
-				Load Negro
-				StoreI EntityAntiguo
-				Load Amarillo
-				StoreI EntityActual
-				JnS ActualizarIndexEntity
-				Load EntityActAux
-				Subt Moneda
-				SkipCond 400
-				Jump IndexMovimientoMasUno	
-				Jump SumarMoneda
-VerifyTurquesa, Load esTurquesa
-				Subt Uno
-				SkipCond 400
-				Jump VerifyRojo
-PintarTurquesa, LoadI EntityActual
-				Store ColorTemp
-				LoadI IndexColorAnterior
-				StoreI EntityAntiguo
-				Load Turquesa
-				StoreI EntityActual
-				JnS ActualizarIndexEntity
-				Jump IndexMovimientoMasUno
-VerifyRojo, Load esRojo
-			Subt Uno
-			SkipCond 400
-			Jump VerifyVerde
-PintarRojo,  LoadI EntityActual
-			Store ColorTemp
-			LoadI IndexColorAnterior
-			StoreI EntityAntiguo
-			Load Rojo
-			StoreI EntityActual
-			JnS ActualizarIndexEntity
-			Jump IndexMovimientoMasUno
-VerifyVerde, Load esVerde
-			Subt Uno
-			SkipCond 400
-			Jump PintarRosado
-PintarVerde, LoadI EntityActual
-			Store ColorTemp  
-			LoadI IndexColorAnterior
-			StoreI EntityAntiguo
-			Load Verde
-			StoreI EntityActual
-			JnS ActualizarIndexEntity
-			Jump IndexMovimientoMasUno
-PintarRosado,   LoadI EntityActual
-				Store ColorTemp
-			LoadI IndexColorAnterior
-			StoreI EntityAntiguo
-			Load Rosado
-			StoreI EntityActual
-			JnS ActualizarIndexEntity
-			Jump IndexMovimientoMasUno
+						JumpI internallyReviewCollisionsWithBoundaries
+
+
+internalBlueBorderColisionDetection, Clear
+									 LoadI PosicionHexadecimalEntidadActual
+									 Subt CONST_GRID_COLOR_BLUE
+									 SkipCond 400
+									 JumpI internalMovementRevisionLogic
+									
+									 Load PosicionHexadecimalEntidadAnterior
+									 Store PosicionHexadecimalEntidadActual
+									 Load CoordenadaEntityColumnaAnterior
+									 Store CoordenadaEntityColumnaActual
+									 Load CoordenadaEntityFilaAnterior
+									 Store CoordenadaEntityFilaActual
+
+									 // Incrementamos el movimiento 
+									 Load IndexPointerToMovementArray
+									 Add CONST_ONE
+									 Store IndexPointerToMovementArray
+									 Jump whileTrue
+									 
+
+
+internallyMoveAnEntity, HEX 000
+						// Revisamos si la entidad es pacman, si la es realizxamos toda la logica internamente 
+						Load isEntityPacman
+						Subt CONST_ONE
+						SkipCond 400
+						Jump reviewAndPaintIfEntityisCyanGhost
+
+						// Realizamos la logica del programa
+						LoadI PosicionHexadecimalEntidadActual
+						Store PosicionHexadecimalEntityActAux
+						Load CONST_GRID_COLOR_NEGRO
+						StoreI PosicionHexadecimalEntidadAnterior
+						
+						Load CONST_GRID_COLOR_YELLOW
+						StoreI PosicionHexadecimalEntidadActual
+						JnS ActualizarIndexEntity
+
+						Load PosicionHexadecimalEntityActAux
+						Subt CONST_GRID_COLOR_MONEDA
+						SkipCond 400
+						Jump IndexMovimientoMasUnoYReconstruccionDeArreglo
+						Jump SumarMonedaATotal
+						JumpI internallyMoveAnEntity
+
+
+reviewAndPaintIfEntityisCyanGhost, Clear
+									Load isEntityTurquesa
+									Subt CONST_ONE	
+									SkipCond 400
+									Jump reviewAndPaintIfEntitiyisRedGhost
+
+									LoadI PosicionHexadecimalEntidadActual
+									Store ColorTemp
+									LoadI IndexColorAnterior
+									StoreI PosicionHexadecimalEntidadAnterior
+									Load CONST_GRID_COLOR_TURQUESA
+									StoreI PosicionHexadecimalEntidadActual
+									JnS ActualizarIndexEntity
+									Jump IndexMovimientoMasUnoYReconstruccionDeArreglo
+
+
+reviewAndPaintIfEntitiyisRedGhost,  Clear
+									Load isEntityRojo
+									Subt CONST_ONE
+									SkipCond 400
+									Jump reviewAndPaintIfEntityisGreenGhost
+
+									LoadI PosicionHexadecimalEntidadActual
+									Store ColorTemp
+									LoadI IndexColorAnterior
+									StoreI PosicionHexadecimalEntidadAnterior
+									Load CONST_GRID_COLOR_ROJO
+									StoreI PosicionHexadecimalEntidadActual
+									JnS ActualizarIndexEntity
+									Jump IndexMovimientoMasUnoYReconstruccionDeArreglo
+
+reviewAndPaintIfEntityisGreenGhost, Clear
+									Load isEntityVerde
+									Subt CONST_ONE
+									SkipCond 400
+									Jump reviewAndPaintIfEtityisPinkGhost
+
+									LoadI PosicionHexadecimalEntidadActual
+									Store ColorTemp
+									LoadI IndexColorAnterior
+									StoreI PosicionHexadecimalEntidadAnterior
+									Load CONST_GRID_COLOR_VERDE
+									StoreI PosicionHexadecimalEntidadActual
+									JnS ActualizarIndexEntity
+									Jump IndexMovimientoMasUnoYReconstruccionDeArreglo
+									
+reviewAndPaintIfEtityisPinkGhost,   Clear	
+								    LoadI PosicionHexadecimalEntidadActual
+									Store ColorTemp
+									LoadI IndexColorAnterior
+									StoreI PosicionHexadecimalEntidadAnterior
+									Load CONST_GRID_COLOR_ROSADO
+									StoreI PosicionHexadecimalEntidadActual
+									JnS ActualizarIndexEntity
+									Jump IndexMovimientoMasUnoYReconstruccionDeArreglo
+
+
 ActualizarIndexEntity, HEX 000
-				Load EntityActual
-				StoreI IndexEntityArray
-				Load IndexEntityArray
-				Add Uno
-				Store IndexEntityArray
-				JumpI ActualizarIndexEntity
-NextMovementAzul, Load IndexMovement
-				Add Uno
-				Store IndexMovement
-				Jump LoopMovimientos				
-IndexMovimientoMasUno, Load esPacman
-						Subt Uno
+					   Load PosicionHexadecimalEntidadActual
+					   StoreI IndexPointerEntityArray
+					   Load IndexPointerEntityArray
+					   Add CONST_ONE
+					   Store IndexPointerEntityArray
+					   JumpI ActualizarIndexEntity
+
+
+
+
+SumarMonedaATotal,   Clear
+				     Load PuntosDeLaPartida
+		             Add CONST_ONE
+		             Store PuntosDeLaPartida
+					 Output 
+		             Jump IndexMovimientoMasUnoYReconstruccionDeArreglo
+
+
+IndexMovimientoMasUnoYReconstruccionDeArreglo, Clear
+					 Load isEntityPacman
+						Subt CONST_ONE
 						SkipCond 000
 						Jump RebuildEntities
-						Load IndexMovement
-						Add Uno
-						Store IndexMovement
+						Load IndexPointerToMovementArray
+						Add CONST_ONE
+						Store IndexPointerToMovementArray
 						Load ColorTemp
-						Subt Moneda
+						Subt CONST_GRID_COLOR_MONEDA
 						SkipCond 400
 						Jump RevisionNaranja
 						Jump GuadarColor
+
+
+RebuildEntities, 	Clear
+					LoadI IndexEntityArrayCopia
+				 	Store LocationTemp
+				 	Load CONST_GRID_COLOR_YELLOW
+				 	StoreI LocationTemp
+				 	Load IndexEntityArrayCopia
+				 	Add CONST_ONE
+				 	Store IndexEntityArrayCopia
+				 	LoadI IndexEntityArrayCopia
+				 	Store LocationTemp
+				 	Load CONST_GRID_COLOR_TURQUESA
+				 	StoreI LocationTemp
+				 	Load IndexEntityArrayCopia
+				 	Add CONST_ONE
+				 	Store IndexEntityArrayCopia
+					LoadI IndexEntityArrayCopia
+					Store LocationTemp
+					Load CONST_GRID_COLOR_ROJO
+					StoreI LocationTemp
+					Load IndexEntityArrayCopia
+					Add CONST_ONE
+					Store IndexEntityArrayCopia
+					LoadI IndexEntityArrayCopia
+					Store LocationTemp
+					Load CONST_GRID_COLOR_VERDE
+					StoreI LocationTemp
+					Load IndexEntityArrayCopia
+					Add CONST_ONE
+					Store IndexEntityArrayCopia
+					LoadI IndexEntityArrayCopia
+					Store LocationTemp
+					Load CONST_GRID_COLOR_ROSADO
+					StoreI LocationTemp
+					Load IndexEntityArrayInicio
+					Store IndexEntityArrayCopia
+					JumpI internallyMoveAnEntity
+
+
 RevisionNaranja, Load ColorTemp
-				Subt Naranja
+				Subt CONST_GRID_COLOR_NARANJA
 				SkipCond 400
 				Jump RevisionNegro
 				Jump GuadarColor
@@ -286,132 +416,286 @@ RevisionNegro, Load ColorTemp
 				Jump GuadarColor
 GuadarColor, Load ColorTemp
 			StoreI IndexColorAnterior
-MoveIndexColor,	Load esRosado
-				Subt Uno
+MoveIndexColor,	Load isEntityRosado
+				Subt CONST_ONE
 				SkipCond 000
 				Jump ReiniciarLoopEntity
 				Load IndexColorAnterior
-				Add Uno
+				Add CONST_ONE
 				Store IndexColorAnterior
 				Jump RebuildEntities
 ReiniciarLoopEntity, Load IndexEntityArrayInicio
-					Store IndexEntityArray
+					Store IndexPointerEntityArray
 					Clear
-					Store ContadorEntity
+					Store ContadorDeEntidadEnAnalisis
 					Load IndexColorAnteriorInicio
-					Store IndexColorAnterior			
-RebuildEntities, LoadI IndexEntityArrayCopia
-				Store LocationTemp
-				Load Amarillo
-				StoreI LocationTemp
-				Load IndexEntityArrayCopia
-				Add Uno
-				Store IndexEntityArrayCopia
-				LoadI IndexEntityArrayCopia
-				Store LocationTemp
-				Load Turquesa
-				StoreI LocationTemp
-				Load IndexEntityArrayCopia
-				Add Uno
-				Store IndexEntityArrayCopia
-				LoadI IndexEntityArrayCopia
-				Store LocationTemp
-				Load Rojo
-				StoreI LocationTemp
-				Load IndexEntityArrayCopia
-				Add Uno
-				Store IndexEntityArrayCopia
-				LoadI IndexEntityArrayCopia
-				Store LocationTemp
-				Load Verde
-				StoreI LocationTemp
-				Load IndexEntityArrayCopia
-				Add Uno
-				Store IndexEntityArrayCopia
-				LoadI IndexEntityArrayCopia
-				Store LocationTemp
-				Load Rosado
-				StoreI LocationTemp
-				Load IndexEntityArrayInicio
-				Store IndexEntityArrayCopia
-				Jump obtenerColumnaFila
-SumarMoneda, Load Puntos
-             Add Uno
-             Store Puntos
-			 Output 
-             Jump IndexMovimientoMasUno
+					Store IndexColorAnterior		
+					Jump RebuildEntities
 
-					
+/* Metodo que se encarga de revisar si exsites movimiento spor hacer, la idea de este metdood es revisar si el total de movimiento (100) no se ha alcanzado
+/* si no se ha alcanzado, el metodo continua saltando rapidamente hacia fuera, si no , reinicia todas las variables
+/* @param CONST_ONE_HUNDRED: constante de 100 para los movimieintos
+/* @param ContadorMovimientosRealizadosEnDecimal: contador interno para definir cuantos movimientos se han dado en una vida
+/* @param CONST_POSICION_INICIAL_ARREGLO_MOVIMIENTOS: posicion estatica de la localizacion del arrelgo de movimientos
+/* @param IndexPointerToMovementArray: varaible que determina el puntero hacia el arreglo de movimientos
+reviewIfMovementResetIsNeeded, HEX 000
+							   /*If zero early exit*/
+							   Load CONST_ONE_HUNDRED
+							   Subt ContadorMovimientosRealizadosEnDecimal
+							    SkipCond 000
+							   JumpI reviewIfMovementResetIsNeeded
+							   Load CONST_ONE_HUNDRED
+							   Output
+							  
+							   /*Si no hay espacios, entonces reiniciamos las direcciones*/
+							   Load CONST_POSICION_INICIAL_ARREGLO_MOVIMIENTOS
+							   Store IndexPointerToMovementArray
+							   Load CONST_ZERO
+							   Store ContadorMovimientosRealizadosEnDecimal
+							   JumpI reviewIfMovementResetIsNeeded
 
-End, Halt
-pos, HEX 000
-numHlpr, HEX 000
+/*Grupo de funciones de validacion para el tipo de entidad en analisis, la idea de estas funciones es regresar 
+/* directamente al caller principal, es decir a verificarEntidadEsPacman si es que en alguno de los casos se ejecuto \
+/* todo el trabajo interno. En cualquier momento la entidad de analisis debe ser alguna de las entidades abajo
+/* por tanto, si la encontramos y marcamos su booleano, salimos directamente al verificarEntidadEsPacman que es 
+/* el metodo padre de las llamadas JnS, para retornar rapidamente al main.
+verificarEntidadEsPacman, HEX 000
+                        // Revisamos el valor de la entidad, encadenamos llamadas JnS en esta seccion
+                        Load ContadorDeEntidadEnAnalisis
+                        Subt CONST_ONE
+                        SkipCond 400
+                        JnS verificarFantasmaTurquesa
+                        Load CONST_ONE
+                        Store isEntityPacman
+                        JumpI verificarEntidadEsPacman
+
+verificarFantasmaTurquesa, HEX 000
+                        // Revisamos el valor de la entidad
+                        Load ContadorDeEntidadEnAnalisis
+                        Subt CONST_TWO
+                        SkipCond 400
+                        JnS verificarFantasmaRojo
+                        Load CONST_ONE
+                        Load CONST_ONE
+                        Store isEntityTurquesa
+                        JumpI verificarEntidadEsPacman
+
+verificarFantasmaRojo, HEX 000
+                        // Revisamos el valor de la entidad
+                        Load ContadorDeEntidadEnAnalisis
+                        Subt CONST_THREE
+                        SkipCond 400
+                        JnS verificarFantasmaVerde
+                        Load CONST_ONE
+                        Load CONST_ONE
+                        Store isEntityRojo
+                        JumpI verificarEntidadEsPacman
+
+verificarFantasmaVerde, HEX 000
+                        // Revisamos el valor de la entidad
+                        Load ContadorDeEntidadEnAnalisis
+                        Subt CONST_FOUR
+                        SkipCond 400
+                        JnS verificarFantasmaRosado
+                        Load CONST_ONE
+                        Load CONST_ONE
+                        Store isEntityVerde
+                        JumpI verificarEntidadEsPacman
+
+verificarFantasmaRosado, HEX 000
+                        // Revisamos el valor de la entidad
+                        Load CONST_ONE
+                        Load CONST_ONE
+                        Store isEntityRosado
+                        JumpI verificarEntidadEsPacman
+		
+							
+
+
+
+obtenerColumnaYFila, HEX 000
+					 JnS encerarTodosLosBooleanosDeEntidades
+					 Load CONST_ONE
+					 /*Aumentamos en uno el contador de entidades, moviendonos en cada una de las entidades
+					 /*facilitando el analisis de la entidad basada en la identificacion posicional del valor*/
+					 Load ContadorDeEntidadEnAnalisis
+					 Add CONST_ONE
+					 Store ContadorDeEntidadEnAnalisis
+					 /*Cargamos los valores del arreglo de entidades (direcciones hex) 
+					 /*en memoria y la asignamos a un identificador posicional para saber de donde se mueve y a */
+					 /* donde regresar
+					 LoadI IndexPointerEntityArray
+					 Store PosicionHexadecimalEntityActAux
+					 Store PosicionHexadecimalEntidadActual
+					 Store PosicionHexadecimalEntidadAnterior
+					 /*Tomamos el valor de extractedPosition para 
+					 /*calcular la columna y la fila*/
+					 Load  PosicionHexadecimalEntidadAnterior
+					 Subt  CONST_BASE_DEL_DISPLAY
+					 Store extractedPosition
+					 JnS extractColumnAndStore
+					 Load CONST_ONE
+					 JnS extractRowAndStore
+					 Load CONST_ONE
+					 JumpI obtenerColumnaYFila
+
+
+
+
+extractColumnAndStore, HEX 000
+					   JnS moduloOperation
+					   Load extractedNumHlpr
+					   Store CoordenadaEntityColumnaActual
+					   Store CoordenadaEntityColumnaAnterior
+					   JumpI extractColumnAndStore
+extractRowAndStore, HEX 000
+					JnS divisionOperation
+					Load extractedCounter
+					Store CoordenadaEntityFilaActual
+					Store CoordenadaEntityFilaAnterior
+					JumpI extractRowAndStore
+
+/*Operacion de modulo simplificada y aislada a una funcion sin retorno JnS*/
+moduloOperation, HEX 000
+				Load extractedPosition
+				Store extractedNumHlpr
+				whileHigherThanZero, Load extractedNumHlpr
+									 Subt CONST_TEN_IN_HEX	
+							 		 SkipCond 800
+									 JumpI moduloOperation
+									 Store extractedNumHlpr
+							 		 Jump whileHigherThanZero	
+
+
+/*Modulo de division simplificado para que sea de un solo uso y sin dependencias a ninguna otra parte del codigo*/
+divisionOperation,  HEX 000
+					Load extractedPosition
+					Store extractedNumHlpr
+					Load CONST_ZERO
+					Store extractedCounter
+							whileNotZero,   load extractedNumHlpr 
+							  				Subt CONST_TEN_IN_HEX
+							  				SkipCond 800
+											JumpI divisionOperation
+											Store extractedNumHlpr
+											Load extractedCounter
+											Add CONST_ONE
+											Store extractedCounter
+											Jump whileNotZero
+
+/*Metodo util para definir que todas las variables de analisis de entidades se vuelvan cero antes de realizar su analisis*/
+encerarTodosLosBooleanosDeEntidades, HEX 000
+									 Load CONST_ZERO
+									 Store isEntityPacman
+									 Store isEntityRojo
+									 Store isEntityRosado
+									 Store isEntityTurquesa
+									 Store isEntityVerde
+									 JumpI encerarTodosLosBooleanosDeEntidades
+
+cargaDeMapaYEntidadesAlDisplay, HEX 000
+								LoadI IndexPointerToColoresArray
+								StoreI IndexDisplay
+								Load IndexDisplay
+								Add CONST_ONE
+								Store IndexDisplay
+								Load IndexPointerToColoresArray
+								Add CONST_ONE
+								Store IndexPointerToColoresArray
+								Load Counter
+								Add CONST_ONE
+								Store Counter
+								Subt CONST_LIMITE_MOVIMIENTOS
+								SkipCond 800
+								Jump intMainLoopLoadGame	
+									 
+/*Variables*/
+/* @defintion: variables auxiliares requeridas para el manejo de modulo y division
+extractedPosition, HEX 000
+extractedCounter, DEC 0
+extractedNumHlpr, HEX 000
+/* @definition: Variables requeridas para el manejo de constantes
 CONST_ZERO, DEC 0
-CONST_TEN, HEX 10
-counter, DEC 0
-esPacman, DEC 0
-esTurquesa, DEC 0
-esRojo, DEC 0
-esVerde, DEC 0
-esRosado, DEC 0
-i, DEC 0
-Limite, DEC 255
-LimiteDisplay, DEC 15
-Uno, DEC 1
-Dos, DEC 2
-Tres, DEC 3
-Cuatro, DEC 4
-Contador, DEC 0
-Puntos, DEC 0 
-Derecha, DEC 1
-Arriba, DEC 2
-Izquierda, DEC 3
-Abajo, DEC 4
-DeisSeis, DEC 16
-DosCincoSeis, DEC 256
-Amarillo, HEX 6767
-Turquesa, HEX 1BFE
-Rojo, HEX F08A
-Verde, HEX 0F00
-Rosado, Hex FDDC
-Azul, HEX 001F
-Negro, HEX 0000
-Naranja, HEX F5A0
-Moneda, HEX FFFF
-Cien, DEC 100
-IndexDisplay, Hex F00
-base, HEX F00
-IndexColores, HEX 1B4
-IndexMovement, HEX 2B4
+CONST_ONE, DEC 1
+CONST_TWO, DEC 2
+CONST_THREE, DEC 3
+CONST_FOUR, DEC 4 
+CONST_TEN_IN_DEC, DEC 10
+CONST_TEN_IN_HEX, HEX 10
+CONST_DISPLAY_LIMIT, DEC 15
+CONST_SIXTEEN, DEC 16
+CONST_ONE_HUNDRED, DEC 100
+CONST_LIMITE_MOVIMIENTOS, DEC 255
+CONST_TWO_FIFTY_SIX, DEC 256
+CONST_POSICION_INICIAL_ARREGLO_MOVIMIENTOS, HEX 320 /* cambiar cuando añades lineas
+CONST_MOVIMIENTO_DERECHA, DEC 1
+CONST_MOVIMIENTO_ARRIBA, DEC 2
+CONST_MOVIMIENTO_IZQUIERDA, DEC 3
+CONST_MOVIMIENTO_ABAJO, DEC 4
+CONST_BASE_DEL_DISPLAY, HEX F00
+/* @definition:Variables requeridas para el manejo de colores y sus referencias
+CONST_GRID_COLOR_YELLOW, HEX 6767
+CONST_GRID_COLOR_BLUE, HEX 001F
+CONST_GRID_COLOR_TURQUESA, HEX 1BFE
+CONST_GRID_COLOR_ROJO, HEX F08A
+CONST_GRID_COLOR_VERDE, HEX 0F00
+CONST_GRID_COLOR_ROSADO, HEX FDDC
+CONST_GRID_COLOR_NEGRO, HEX 0000
+CONST_GRID_COLOR_NARANJA, HEX F5A0
+CONST_GRID_COLOR_MONEDA, HEX FFFF
+/* @definition: Variables requeridas para el manejo de posiciones iniciales en caso de tener que reiniciar 
+/* las posiciones de los fantasmas o de pacman a las posiciones iniciales
+CONST_ORIGINAL_PACMAN_LOCATION, HEX FB7
+CONST_ORIGINAL_FANTASMA_TURQUESA_LOCATION, HEX F77
+CONST_ORIGINAL_FANTASMA_ROJO_LOCATION, HEX F67
+CONST_ORIGINAL_FANTASMA_VERDE_LOCATION, HEX F78
+CONST_ORIGINAL_FANTASMA_ROSADO_LOCATION, HEX F68
+/* @definition: Variables requeridas para el manejo del ciclo de vida del programa
+/* contadores, vidas, puntaje.
+ContadorDeVidas, DEC 5
+CanComerFantasmas, DEC 0
+ContadorMovimientosRealizadosEnDecimal, DEC 0
+Counter, DEC 0
+PuntosDeLaPartida, DEC 0
+ContadorDeEntidadEnAnalisis, DEC 0
+IndexPointerToMovementArray, HEX 320 /*cambio cuando añades lineas
+IndexDisplay, HEX F00
+/* @definition: Varaibles requeridas para el manejo posicional y el analisis de las entidades dentro 
+/* del juego.
 CoordenadaEntityFilaActual, DEC 0
 CoordenadaEntityFilaAnterior, DEC 0
 CoordenadaEntityColumnaActual, DEC 0
 CoordenadaEntityColumnaAnterior, DEC 0
-EntityActual, HEX 000
-EntityActAux, HEX 000
-EntityAntiguo, HEX 000
+PosicionHexadecimalEntidadActual, HEX 000
+PosicionHexadecimalEntidadAnterior, HEX 000
+PosicionHexadecimalEntityActAux, HEX 000
+IndexPointerEntityArray, HEX 1F5 /*cambio cuando añades lineas
+IndexEntityArrayCopia, HEX 1F5 /*cambio cuando añades lineas
+IndexEntityArrayInicio, Hex 1F5 /*cambio cuando añades lineas
+ithPositionInMovementArray, DEC 0
+IndexPointerToColoresArray, HEX 220 /*cambio cuando añades lineas
 LocationTemp, HEX 000
-ContadorEntity, DEC 0
-IndexEntityArray, HEX 189
-IndexEntityArrayCopia, HEX 189
-IndexEntityArrayInicio, Hex 189
+/* @definition: Variables requeridas para el manejo de control logico del programa, especificamente, del tipo de estructura que 
+/* estamos revisando, como por ejemplo, que tipo de fantasma es
+isEntityPacman, DEC 0
+isEntityTurquesa, DEC 0
+isEntityRojo, DEC 0
+isEntityVerde, DEC 0
+isEntityRosado, DEC 0
+/* @definition: Variables controladores para la informacion de memoria que se trae de la aplicacion interna
 EntityArray, HEX FB7
 			HEX F77
 			HEX F67
 			HEX F78
 			HEX F68
 ColorTemp, HEX 000
-IndexColorAnterior, HEX 191
-IndexColorAnteriorInicio, HEX 191
+IndexColorAnterior, HEX 1FD /* Cambiar siempre a la posicion de memoria a donde apunta ColorAnteriorArray 
+							/* en su primera posicion
+IndexColorAnteriorInicio, HEX 1FD/*Duplicar el inicio para poder regresar
 ColorAnteriorArray, Hex 000
 					Hex 000
 					Hex 000
 					Hex 000
-pacmanOriginalLocation, HEX FB7
-redGhostOriginalLocation, HEX F67
-pinkGhostOriginalLocation, HEX F68
-cyanGhostOriginalLocation, HEX F77
-greenGhostOriginalLocation, HEX F78
 normalPowerUpsLocations, HEX F26
                      HEX F27
                      HEX F36
@@ -438,6 +722,11 @@ normalPowerUpsLocations, HEX F26
                      HEX FC4
 eatOthersPowerUpsLocations, HEX F0F
                     HEX FE2
+pacmanOriginalLocation, HEX FB7
+redGhostOriginalLocation, HEX F67
+pinkGhostOriginalLocation, HEX F68
+cyanGhostOriginalLocation, HEX F77
+greenGhostOriginalLocation, HEX F78
 colorLocationArrayForRow, HEX 000
                      HEX FFFF
                      HEX 000
