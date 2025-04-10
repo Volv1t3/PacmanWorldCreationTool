@@ -159,8 +159,6 @@ internalllyReviewIfLeftIsFree, HEX 000
 
 							   JnS internallyReviewCollisionsWithBoundaries
 							   Load CONST_ONE
-							   JnS internalBlueBorderColisionDetection
-							   Load CONST_ONE
 							   JumpI internalMovementRevisionLogic
 
 internallyReviewIfBottomIsFree, HEX 000
@@ -195,7 +193,7 @@ internallyReviewCollisionsWithBoundaries, HEX 000
 										  Store PosicionHexadecimalEntidadActual
 										  Clear
 										  Store CoordenadaEntityColumnaActual
-										  JumpI internallyReviewCollisionsWithBoundaries
+										  Jump internalBlueBorderColisionDetection
 RevisarCoordenadaColumnaIzquierda, Clear
 								   Load CoordenadaEntityColumnaActual
 								   SkipCond 000
@@ -205,7 +203,7 @@ RevisarCoordenadaColumnaIzquierda, Clear
 								   Store PosicionHexadecimalEntidadActual
 								   Load CONST_SIXTEEN
 								   Store CoordenadaEntityColumnaActual
-								   JumpI internallyReviewCollisionsWithBoundaries
+									Jump internalBlueBorderColisionDetection
 								   
 RevisarCoordenadaFilaAbajo, Clear
 							Load CoordenadaEntityFilaActual
@@ -217,7 +215,7 @@ RevisarCoordenadaFilaAbajo, Clear
 							Store PosicionHexadecimalEntidadActual
 							Clear
 							Store CoordenadaEntityFilaActual
-							JumpI internallyReviewCollisionsWithBoundaries
+							Jump internalBlueBorderColisionDetection
 
 RevisarCoordenadaFilaArriba, Load CoordenadaEntityFilaActual
 						SkipCond 000
@@ -227,14 +225,12 @@ RevisarCoordenadaFilaArriba, Load CoordenadaEntityFilaActual
 						Store PosicionHexadecimalEntidadActual
 						Load CONST_DISPLAY_LIMIT
 						Store CoordenadaEntityFilaActual
-						JumpI internallyReviewCollisionsWithBoundaries
-
-
+						Jump internalBlueBorderColisionDetection
 internalBlueBorderColisionDetection, Clear
 									 LoadI PosicionHexadecimalEntidadActual
 									 Subt CONST_GRID_COLOR_BLUE
 									 SkipCond 400
-									 JumpI internalMovementRevisionLogic
+									 JumpI internallyReviewCollisionsWithBoundaries
 									
 									 Load PosicionHexadecimalEntidadAnterior
 									 Store PosicionHexadecimalEntidadActual
@@ -247,7 +243,9 @@ internalBlueBorderColisionDetection, Clear
 									 Load IndexPointerToMovementArray
 									 Add CONST_ONE
 									 Store IndexPointerToMovementArray
-									 Jump whileTrue
+									 Load CONST_ONE
+									 Store RepiteMovimiento
+									 Jump whileMovementsAreNotOneHundred
 									 
 
 
@@ -268,6 +266,13 @@ internallyMoveAnEntity, HEX 000
 						StoreI PosicionHexadecimalEntidadActual
 						JnS ActualizarIndexEntity
 
+						// Antes de revisar si tenemos una moneda, revisamos si tenemos un powerup
+						Load PosicionHexadecimalEntityActAux
+						Subt CONST_GRID_COLOR_NARANJA
+						SkipCond 0C00
+						JnS updateGameTotalWhenFoundAndSetUpEatOtherCondition
+
+						// Si no tenemos un powerup, continuamos con el chequeo de una moneda 
 						Load PosicionHexadecimalEntityActAux
 						Subt CONST_GRID_COLOR_MONEDA
 						SkipCond 400
@@ -276,18 +281,37 @@ internallyMoveAnEntity, HEX 000
 						JumpI internallyMoveAnEntity
 
 
+updateGameTotalWhenFoundAndSetUpEatOtherCondition, HEX 000
+													// Incrementamos el puntaje en diez puntos, imprimimos y 
+													//retornamos al menu original
+													Load PuntosDeLaPartida
+													Add CONST_TEN_IN_DEC
+													Store PuntosDeLaPartida
+													Output
+													JumpI updateGameTotalWhenFoundAndSetUpEatOtherCondition
+
+
 reviewAndPaintIfEntityisCyanGhost, Clear
 									Load isEntityTurquesa
 									Subt CONST_ONE	
 									SkipCond 400
 									Jump reviewAndPaintIfEntitiyisRedGhost
 
+							 		// Realizamos la logica del metodo
+									// 1. Como la posicion se actualiza al determinar un movimiento valido, 
+									// siempre agarramos aqui el color de la posicion nueva que va a tener.
 									LoadI PosicionHexadecimalEntidadActual
 									Store ColorTemp
+
+									//! Interceptamos aqui si es naranja, si el color guardado es naranaja simplemente regresamos guardamos
 									LoadI IndexColorAnterior
 									StoreI PosicionHexadecimalEntidadAnterior
+
+									
 									Load CONST_GRID_COLOR_TURQUESA
 									StoreI PosicionHexadecimalEntidadActual
+
+									
 									JnS ActualizarIndexEntity
 									Jump IndexMovimientoMasUnoYReconstruccionDeArreglo
 
@@ -300,10 +324,15 @@ reviewAndPaintIfEntitiyisRedGhost,  Clear
 
 									LoadI PosicionHexadecimalEntidadActual
 									Store ColorTemp
+							
+
+									
+									
 									LoadI IndexColorAnterior
 									StoreI PosicionHexadecimalEntidadAnterior
 									Load CONST_GRID_COLOR_ROJO
 									StoreI PosicionHexadecimalEntidadActual
+									
 									JnS ActualizarIndexEntity
 									Jump IndexMovimientoMasUnoYReconstruccionDeArreglo
 
@@ -315,22 +344,36 @@ reviewAndPaintIfEntityisGreenGhost, Clear
 
 									LoadI PosicionHexadecimalEntidadActual
 									Store ColorTemp
+									
+									
 									LoadI IndexColorAnterior
 									StoreI PosicionHexadecimalEntidadAnterior
 									Load CONST_GRID_COLOR_VERDE
 									StoreI PosicionHexadecimalEntidadActual
+
+					
+									
 									JnS ActualizarIndexEntity
 									Jump IndexMovimientoMasUnoYReconstruccionDeArreglo
 									
 reviewAndPaintIfEtityisPinkGhost,   Clear	
 								    LoadI PosicionHexadecimalEntidadActual
 									Store ColorTemp
+									// Revision Naranja
+									
+									
+									
 									LoadI IndexColorAnterior
 									StoreI PosicionHexadecimalEntidadAnterior
+									
 									Load CONST_GRID_COLOR_ROSADO
 									StoreI PosicionHexadecimalEntidadActual
+
+									
+									
 									JnS ActualizarIndexEntity
 									Jump IndexMovimientoMasUnoYReconstruccionDeArreglo
+
 
 
 ActualizarIndexEntity, HEX 000
@@ -410,10 +453,8 @@ RevisionNaranja, Load ColorTemp
 				SkipCond 400
 				Jump RevisionNegro
 				Jump GuadarColor
-RevisionNegro, Load ColorTemp
-				SkipCond 400
-				Jump MoveIndexColor
-				Jump GuadarColor
+RevisionNegro, Load CONST_GRID_COLOR_NEGRO
+				Store ColorTemp
 GuadarColor, Load ColorTemp
 			StoreI IndexColorAnterior
 MoveIndexColor,	Load isEntityRosado
@@ -518,13 +559,20 @@ obtenerColumnaYFila, HEX 000
 					 Load CONST_ONE
 					 /*Aumentamos en uno el contador de entidades, moviendonos en cada una de las entidades
 					 /*facilitando el analisis de la entidad basada en la identificacion posicional del valor*/
-					 Load ContadorDeEntidadEnAnalisis
+					 Load RepiteMovimiento
+					 Subt CONST_ONE
+					 SkipCond 400
+					 Jump AumentarContadorEntidad
+					 Jump obtenerColumnaYFila2
+AumentarContadorEntidad, Load ContadorDeEntidadEnAnalisis
 					 Add CONST_ONE
 					 Store ContadorDeEntidadEnAnalisis
-					 /*Cargamos los valores del arreglo de entidades (direcciones hex) 
+					 Jump obtenerColumnaYFila2
+					 
+					/*Cargamos los valores del arreglo de entidades (direcciones hex) 
 					 /*en memoria y la asignamos a un identificador posicional para saber de donde se mueve y a */
 					 /* donde regresar
-					 LoadI IndexPointerEntityArray
+obtenerColumnaYFila2,LoadI IndexPointerEntityArray
 					 Store PosicionHexadecimalEntityActAux
 					 Store PosicionHexadecimalEntidadActual
 					 Store PosicionHexadecimalEntidadAnterior
@@ -537,11 +585,9 @@ obtenerColumnaYFila, HEX 000
 					 Load CONST_ONE
 					 JnS extractRowAndStore
 					 Load CONST_ONE
+					 Clear
+					 Store RepiteMovimiento
 					 JumpI obtenerColumnaYFila
-
-
-
-
 extractColumnAndStore, HEX 000
 					   JnS moduloOperation
 					   Load extractedNumHlpr
@@ -627,7 +673,7 @@ CONST_SIXTEEN, DEC 16
 CONST_ONE_HUNDRED, DEC 100
 CONST_LIMITE_MOVIMIENTOS, DEC 255
 CONST_TWO_FIFTY_SIX, DEC 256
-CONST_POSICION_INICIAL_ARREGLO_MOVIMIENTOS, HEX 320 /* cambiar cuando añades lineas
+CONST_POSICION_INICIAL_ARREGLO_MOVIMIENTOS, HEX 331 /* cambiar cuando añades lineas
 CONST_MOVIMIENTO_DERECHA, DEC 1
 CONST_MOVIMIENTO_ARRIBA, DEC 2
 CONST_MOVIMIENTO_IZQUIERDA, DEC 3
@@ -658,7 +704,7 @@ ContadorMovimientosRealizadosEnDecimal, DEC 0
 Counter, DEC 0
 PuntosDeLaPartida, DEC 0
 ContadorDeEntidadEnAnalisis, DEC 0
-IndexPointerToMovementArray, HEX 320 /*cambio cuando añades lineas
+IndexPointerToMovementArray, HEX 331 /*cambio cuando añades lineas
 IndexDisplay, HEX F00
 /* @definition: Varaibles requeridas para el manejo posicional y el analisis de las entidades dentro 
 /* del juego.
@@ -669,11 +715,11 @@ CoordenadaEntityColumnaAnterior, DEC 0
 PosicionHexadecimalEntidadActual, HEX 000
 PosicionHexadecimalEntidadAnterior, HEX 000
 PosicionHexadecimalEntityActAux, HEX 000
-IndexPointerEntityArray, HEX 1F5 /*cambio cuando añades lineas
-IndexEntityArrayCopia, HEX 1F5 /*cambio cuando añades lineas
-IndexEntityArrayInicio, Hex 1F5 /*cambio cuando añades lineas
+IndexPointerEntityArray, HEX 206 /*cambio cuando añades lineas
+IndexEntityArrayCopia, HEX 206 /*cambio cuando añades lineas
+IndexEntityArrayInicio, Hex 206 /*cambio cuando añades lineas
 ithPositionInMovementArray, DEC 0
-IndexPointerToColoresArray, HEX 220 /*cambio cuando añades lineas
+IndexPointerToColoresArray, HEX 231 /*cambio cuando añades lineas
 LocationTemp, HEX 000
 /* @definition: Variables requeridas para el manejo de control logico del programa, especificamente, del tipo de estructura que 
 /* estamos revisando, como por ejemplo, que tipo de fantasma es
@@ -682,6 +728,7 @@ isEntityTurquesa, DEC 0
 isEntityRojo, DEC 0
 isEntityVerde, DEC 0
 isEntityRosado, DEC 0
+RepiteMovimiento, DEC 0
 /* @definition: Variables controladores para la informacion de memoria que se trae de la aplicacion interna
 EntityArray, HEX FB7
 			HEX F77
@@ -689,9 +736,9 @@ EntityArray, HEX FB7
 			HEX F78
 			HEX F68
 ColorTemp, HEX 000
-IndexColorAnterior, HEX 1FD /* Cambiar siempre a la posicion de memoria a donde apunta ColorAnteriorArray 
+IndexColorAnterior, HEX 20E /* Cambiar siempre a la posicion de memoria a donde apunta ColorAnteriorArray 
 							/* en su primera posicion
-IndexColorAnteriorInicio, HEX 1FD/*Duplicar el inicio para poder regresar
+IndexColorAnteriorInicio, HEX 20E/*Duplicar el inicio para poder regresar
 ColorAnteriorArray, Hex 000
 					Hex 000
 					Hex 000
@@ -815,7 +862,7 @@ colorLocationArrayForRow, HEX 000
                      HEX 000
                      HEX 000
                      HEX 000
-                     HEX 000
+                     HEX F5A0
                      HEX 000
                      HEX FFFF
                      HEX FFFF
