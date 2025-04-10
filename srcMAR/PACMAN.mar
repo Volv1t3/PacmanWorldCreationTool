@@ -452,12 +452,6 @@ reviewIfMovementResetIsNeeded, HEX 000
 							   Store IndexPointerToMovementArray
 							   Load CONST_ZERO
 							   Store ContadorMovimientosRealizadosEnDecimal
-							   Store ContadorDeEntidadEnAnalisis
-							   Load IndexEntityArrayInicio
-							   Store IndexPointerEntityArray
-							   Store IndexEntityArrayCopia
-							 	Load IndexColorAnteriorInicio
-								Store IndexColorAnterior
 							   JumpI reviewIfMovementResetIsNeeded
 
 /*Grupo de funciones de validacion para el tipo de entidad en analisis, la idea de estas funciones es regresar 
@@ -633,7 +627,7 @@ CONST_SIXTEEN, DEC 16
 CONST_ONE_HUNDRED, DEC 100
 CONST_LIMITE_MOVIMIENTOS, DEC 255
 CONST_TWO_FIFTY_SIX, DEC 256
-CONST_POSICION_INICIAL_ARREGLO_MOVIMIENTOS, HEX 326 /* cambiar cuando añades lineas
+CONST_POSICION_INICIAL_ARREGLO_MOVIMIENTOS, HEX 320 /* cambiar cuando añades lineas
 CONST_MOVIMIENTO_DERECHA, DEC 1
 CONST_MOVIMIENTO_ARRIBA, DEC 2
 CONST_MOVIMIENTO_IZQUIERDA, DEC 3
@@ -664,7 +658,7 @@ ContadorMovimientosRealizadosEnDecimal, DEC 0
 Counter, DEC 0
 PuntosDeLaPartida, DEC 0
 ContadorDeEntidadEnAnalisis, DEC 0
-IndexPointerToMovementArray, HEX 326 /*cambio cuando añades lineas
+IndexPointerToMovementArray, HEX 320 /*cambio cuando añades lineas
 IndexDisplay, HEX F00
 /* @definition: Varaibles requeridas para el manejo posicional y el analisis de las entidades dentro 
 /* del juego.
@@ -675,11 +669,11 @@ CoordenadaEntityColumnaAnterior, DEC 0
 PosicionHexadecimalEntidadActual, HEX 000
 PosicionHexadecimalEntidadAnterior, HEX 000
 PosicionHexadecimalEntityActAux, HEX 000
-IndexPointerEntityArray, HEX 1FB /*cambio cuando añades lineas
-IndexEntityArrayCopia, HEX 1FB /*cambio cuando añades lineas
-IndexEntityArrayInicio, Hex 1FB /*cambio cuando añades lineas
+IndexPointerEntityArray, HEX 1F5 /*cambio cuando añades lineas
+IndexEntityArrayCopia, HEX 1F5 /*cambio cuando añades lineas
+IndexEntityArrayInicio, Hex 1F5 /*cambio cuando añades lineas
 ithPositionInMovementArray, DEC 0
-IndexPointerToColoresArray, HEX 226 /*cambio cuando añades lineas
+IndexPointerToColoresArray, HEX 220 /*cambio cuando añades lineas
 LocationTemp, HEX 000
 /* @definition: Variables requeridas para el manejo de control logico del programa, especificamente, del tipo de estructura que 
 /* estamos revisando, como por ejemplo, que tipo de fantasma es
@@ -695,9 +689,9 @@ EntityArray, HEX FB7
 			HEX F78
 			HEX F68
 ColorTemp, HEX 000
-IndexColorAnterior, HEX 203 /* Cambiar siempre a la posicion de memoria a donde apunta ColorAnteriorArray 
+IndexColorAnterior, HEX 1FD /* Cambiar siempre a la posicion de memoria a donde apunta ColorAnteriorArray 
 							/* en su primera posicion
-IndexColorAnteriorInicio, HEX 203/*Duplicar el inicio para poder regresar
+IndexColorAnteriorInicio, HEX 1FD/*Duplicar el inicio para poder regresar
 ColorAnteriorArray, Hex 000
 					Hex 000
 					Hex 000
