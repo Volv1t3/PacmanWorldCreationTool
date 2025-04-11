@@ -446,15 +446,51 @@ RebuildEntities, 	Clear
 					Load IndexEntityArrayInicio
 					Store IndexEntityArrayCopia
 					JumpI internallyMoveAnEntity
-
-
+					
 RevisionNaranja, Load ColorTemp
 				Subt CONST_GRID_COLOR_NARANJA
 				SkipCond 400
-				Jump RevisionNegro
+				Jump RevisionFantasmaEncimadeFantasmaTurquesa
 				Jump GuadarColor
-RevisionNegro, Load CONST_GRID_COLOR_NEGRO
-				Store ColorTemp
+RevisionFantasmaEncimadeFantasmaTurquesa, Load ColorTemp
+								Subt CONST_GRID_COLOR_TURQUESA
+								SkipCond 400
+								Jump RevisionFantasmaEncimadeFantasmaRojo
+								LoadI IndexColorAnteriorInicio
+								Store ColorTemp
+								Jump GuadarColor
+RevisionFantasmaEncimadeFantasmaRojo, Load ColorTemp
+										Subt CONST_GRID_COLOR_ROJO
+										SkipCond 400
+										Jump RevisionFantasmaEncimadeFantasmaVerde
+										Load IndexColorAnteriorInicio
+										Add CONST_ONE
+										Store IndexColorAnteriorAux
+										LoadI IndexColorAnteriorAux
+										Store ColorTemp
+										Jump GuadarColor
+RevisionFantasmaEncimadeFantasmaVerde, Load ColorTemp
+										Subt CONST_GRID_COLOR_VERDE
+										SkipCond 400
+										Jump RevisionFantasmaEncimadeFantasmaRosado
+										Load IndexColorAnteriorInicio
+										Add CONST_TWO
+										Store IndexColorAnteriorAux
+										LoadI IndexColorAnteriorAux
+										Store ColorTemp
+										Jump GuadarColor
+RevisionFantasmaEncimadeFantasmaRosado, Load ColorTemp
+										Subt CONST_GRID_COLOR_ROSADO
+										SkipCond 400
+										Jump GuadarNegro
+										Load IndexColorAnteriorInicio
+										Add CONST_THREE
+										Store IndexColorAnteriorAux
+										LoadI IndexColorAnteriorAux
+										Store ColorTemp
+										Jump GuadarColor
+GuadarNegro, Load CONST_GRID_COLOR_NEGRO
+			Store ColorTemp
 GuadarColor, Load ColorTemp
 			StoreI IndexColorAnterior
 MoveIndexColor,	Load isEntityRosado
@@ -673,7 +709,7 @@ CONST_SIXTEEN, DEC 16
 CONST_ONE_HUNDRED, DEC 100
 CONST_LIMITE_MOVIMIENTOS, DEC 255
 CONST_TWO_FIFTY_SIX, DEC 256
-CONST_POSICION_INICIAL_ARREGLO_MOVIMIENTOS, HEX 331 /* cambiar cuando añades lineas
+CONST_POSICION_INICIAL_ARREGLO_MOVIMIENTOS, HEX 357 /* cambiar cuando añades lineas
 CONST_MOVIMIENTO_DERECHA, DEC 1
 CONST_MOVIMIENTO_ARRIBA, DEC 2
 CONST_MOVIMIENTO_IZQUIERDA, DEC 3
@@ -704,7 +740,7 @@ ContadorMovimientosRealizadosEnDecimal, DEC 0
 Counter, DEC 0
 PuntosDeLaPartida, DEC 0
 ContadorDeEntidadEnAnalisis, DEC 0
-IndexPointerToMovementArray, HEX 331 /*cambio cuando añades lineas
+IndexPointerToMovementArray, HEX 357 /*cambio cuando añades lineas
 IndexDisplay, HEX F00
 /* @definition: Varaibles requeridas para el manejo posicional y el analisis de las entidades dentro 
 /* del juego.
@@ -715,11 +751,11 @@ CoordenadaEntityColumnaAnterior, DEC 0
 PosicionHexadecimalEntidadActual, HEX 000
 PosicionHexadecimalEntidadAnterior, HEX 000
 PosicionHexadecimalEntityActAux, HEX 000
-IndexPointerEntityArray, HEX 206 /*cambio cuando añades lineas
-IndexEntityArrayCopia, HEX 206 /*cambio cuando añades lineas
-IndexEntityArrayInicio, Hex 206 /*cambio cuando añades lineas
+IndexPointerEntityArray, HEX 22B /*cambio cuando añades lineas
+IndexEntityArrayCopia, HEX 22B /*cambio cuando añades lineas
+IndexEntityArrayInicio, Hex 22B /*cambio cuando añades lineas
 ithPositionInMovementArray, DEC 0
-IndexPointerToColoresArray, HEX 231 /*cambio cuando añades lineas
+IndexPointerToColoresArray, HEX 257 /*cambio cuando añades lineas
 LocationTemp, HEX 000
 /* @definition: Variables requeridas para el manejo de control logico del programa, especificamente, del tipo de estructura que 
 /* estamos revisando, como por ejemplo, que tipo de fantasma es
@@ -736,9 +772,10 @@ EntityArray, HEX FB7
 			HEX F78
 			HEX F68
 ColorTemp, HEX 000
-IndexColorAnterior, HEX 20E /* Cambiar siempre a la posicion de memoria a donde apunta ColorAnteriorArray 
+IndexColorAnterior, HEX 234 /* Cambiar siempre a la posicion de memoria a donde apunta ColorAnteriorArray 
 							/* en su primera posicion
-IndexColorAnteriorInicio, HEX 20E/*Duplicar el inicio para poder regresar
+IndexColorAnteriorInicio, HEX 234/*Duplicar el inicio para poder regresar
+IndexColorAnteriorAux, HEX 234/*Duplicar el inicio para poder regresar
 ColorAnteriorArray, Hex 000
 					Hex 000
 					Hex 000
