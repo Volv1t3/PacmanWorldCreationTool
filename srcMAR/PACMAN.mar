@@ -13,10 +13,68 @@ intMainLoopLoadGame, Clear
 					 /*Regresamos counter a cero para siguiente uso*/
 					 Load CONST_ZERO
 					 Store Counter
+					 JnS RevisionContadorMovimientosPoder
+					 JnS ValidacionParedes
+					 Load IndexEntityArrayInicio
+					 Store IndexEntityArrayCopia
 					 JnS whileLivesAreHigherThanZero
 					 Load CONST_ONE
 					 Halt
 
+RevisionContadorMovimientosPoder, HEX 000
+									Load CONST_MOVIMIENTOS_PERMITIDOS_PARA_COMER
+									SkipCond 800
+									Halt
+									JumpI RevisionContadorMovimientosPoder
+
+ValidacionParedes, HEX 000
+					Load IndexEntityArrayCopia
+					Subt CONST_ONE
+					Store IndexEntityArrayCopia
+					LoopEntities, Load IndexEntityArrayCopia
+								Add CONST_ONE
+								Store IndexEntityArrayCopia
+								Load ContadorRevisionInicial
+								Add CONST_ONE
+								Store ContadorRevisionInicial
+								Load ContadorRevisionInicial
+								Subt CONST_FIVE
+								SkipCond 800
+								Jump Revision
+								JumpI ValidacionParedes
+Revision, LoadI IndexEntityArrayCopia
+				Add CONST_ONE
+				Store positionRevision
+				LoadI positionRevision
+				Subt CONST_GRID_COLOR_BLUE
+				SkipCond 400
+				Jump LoopEntities
+				Load positionRevision
+				Subt CONST_ONE
+				Subt CONST_SIXTEEN
+				Store positionRevision
+				LoadI positionRevision
+				Subt CONST_GRID_COLOR_BLUE
+				SkipCond 400
+				Jump LoopEntities
+				Load positionRevision
+				Add CONST_SIXTEEN
+				Subt CONST_ONE
+				Store positionRevision
+				LoadI positionRevision
+				Subt CONST_GRID_COLOR_BLUE
+				SkipCond 400
+				Jump LoopEntities
+				Load positionRevision
+				Add CONST_ONE
+				Add CONST_SIXTEEN
+				Store positionRevision
+				LoadI positionRevision
+				Subt CONST_GRID_COLOR_BLUE
+				SkipCond 400
+				Jump LoopEntities
+				Halt
+				
 /*Loop principal de la partida, la idea de este metodo es mantener el estado del juego mientras pacman tenga vidas, reiniciando el 
 /* puntero hacia el mapa de carga de los movimientos mientras pacman no haya sufrido cinco golpes de un fantasma que lo maten. Para esto, el metodo 
 /* revisa las vidas constantemente, registrando que si existen todavia vidas, el programa difurca a varios metodos de control para reiniciar los movimientos 
@@ -29,8 +87,7 @@ intMainLoopLoadGame, Clear
 whileLivesAreHigherThanZero, HEX 000
 							 whileTrue, Clear
 										Load ContadorDeVidas
-										Subt CONST_ONE
-										SkipCond 800 /*Saltamos si llegamos a cero
+										SkipCond 0C00 /*Saltamos si llegamos a cero
 										JumpI whileLivesAreHigherThanZero
 										/*Si tenemos vidas todavia, pasamos a la logica principal 
 										/* que nos permite continuar la ejecucion
@@ -41,7 +98,6 @@ whileLivesAreHigherThanZero, HEX 000
 										
 										
 										Jump whileTrue
-										 
 
 /* Loop interno, secundario pero crucial para el manejo de metodos de validacion de movimientos, de vidas, llamadas a
 /* metodos de validacion de datos, etc. Este bloque se realiza mientras el valor del Contador no llegue a 100, en cuyo caso
@@ -87,6 +143,10 @@ internalGeneralMovementAndLogicLoops, HEX 000
 																	   JnS internalMovementRevisionLogic
 																	   Load CONST_ONE
 
+																	   Load ContadorMovimientosHechosConPowerUpComer
+																	   Subt CONST_ZERO
+																	   SkipCond 800
+																	   JnS removeCanEatState
 																	   // Luego de la revision de colisiones, realizamos un movimiento!
 																	   JnS internallyMoveAnEntity
 																	   Load CONST_ONE
@@ -95,7 +155,19 @@ internalGeneralMovementAndLogicLoops, HEX 000
 																	   // si tenemos movimientos para saltar al loop
 																	   Jump whileMovementsAreNotOneHundred
 																	  
-																		   
+decrementByOneCanComerTimer, HEX 000
+							 // Disminuimos en uno el movimiento, dado que luego de haber hecho un movimiento para determinar la constante, 
+							 // todos los movimientos restantes cuentan como uno menos para este contador.
+							 Load ContadorMovimientosHechosConPowerUpComer
+							 Subt CONST_ONE
+							 Store ContadorMovimientosHechosConPowerUpComer
+							 JumpI decrementByOneCanComerTimer
+removeCanEatState, HEX 000
+					// 1. Quitamos al condicion para poder comer a otros
+					Load CanComerFantasmas
+					Load CONST_ZERO
+					Store CanComerFantasmas
+					JumpI removeCanEatState
 									  
 internalMovementRevisionLogic, HEX 000
 							   // En primera instancia procedemos a revisar derecha, al igual que los 
@@ -261,10 +333,10 @@ internallyMoveAnEntity, HEX 000
 						Store PosicionHexadecimalEntityActAux
 						Load CONST_GRID_COLOR_NEGRO
 						StoreI PosicionHexadecimalEntidadAnterior
+
+						// Si estamos con el powerup entramos a revisar si interceptamos antes del movimiento un 
+						// fantasma en el camino de pacman que cause que todos se reinicie.
 						
-						Load CONST_GRID_COLOR_YELLOW
-						StoreI PosicionHexadecimalEntidadActual
-						JnS ActualizarIndexEntity
 
 						// Antes de revisar si tenemos una moneda, revisamos si tenemos un powerup
 						Load PosicionHexadecimalEntityActAux
@@ -272,23 +344,638 @@ internallyMoveAnEntity, HEX 000
 						SkipCond 0C00
 						JnS updateGameTotalWhenFoundAndSetUpEatOtherCondition
 
+						JnS ActualizarIndexEntity
+						JnS reviewIfFuturePositionIsAGhost
+
+						Load CanComerFantasmas
+								Subt CONST_ONE
+								SkipCond 0C00
+								JnS decrementByOneCanComerTimer
 						// Si no tenemos un powerup, continuamos con el chequeo de una moneda 
 						Load PosicionHexadecimalEntityActAux
 						Subt CONST_GRID_COLOR_MONEDA
 						SkipCond 400
 						Jump IndexMovimientoMasUnoYReconstruccionDeArreglo
+
 						Jump SumarMonedaATotal
 						JumpI internallyMoveAnEntity
 
+							
 
 updateGameTotalWhenFoundAndSetUpEatOtherCondition, HEX 000
-													// Incrementamos el puntaje en diez puntos, imprimimos y 
-													//retornamos al menu original
-													Load PuntosDeLaPartida
-													Add CONST_TEN_IN_DEC
-													Store PuntosDeLaPartida
-													Output
+													// Cargamos la constante que permite ir a comer a alguien mas dentro del sistema
+													Load CONST_ONE
+													Store CanComerFantasmas
+
+													// Definimos un temporizador de movimientos
+													Load CONST_MOVIMIENTOS_PERMITIDOS_PARA_COMER
+													Store ContadorMovimientosHechosConPowerUpComer
+													
 													JumpI updateGameTotalWhenFoundAndSetUpEatOtherCondition
+
+reviewIfFuturePositionIsAGhost, HEX 000
+								// 1. Cargamos la posicion actual, es decir la posicion a la que tiene que moverse antes de imprimir.
+								// y comparamos con un fantasma, si no lo es saltamos
+								Load PosicionHexadecimalEntityActAux
+								Subt CONST_GRID_COLOR_TURQUESA
+								SkipCond 400
+								Jump reviewIfFuturePositionIsARedGhost
+								
+								
+								// 2. Si seguimos aqui significa que tenemo un fantasma turquesa en frente, ahora tenemos que difurcar para pacman si se regresa o le come
+								Load CanComerFantasmas
+								Subt CONST_ONE
+								SkipCond 0C00
+								JnS reviewIfFuturePositionIsAGhostCanComerAdapter
+								JnS beEatenByGhostAndReturnToStart
+
+								// 2. Cargamos la posicion de pacman nueva y la ponemos
+								Load CONST_GRID_COLOR_YELLOW
+								StoreI PosicionHexadecimalEntityActAux
+								Load CONST_GRID_COLOR_NEGRO
+								StoreI PosicionHexadecimalEntidadActual
+
+								// 3. Cargamos la posicion de pacman nueva en el arreglo de posiciones
+							    Load PosicionHexadecimalEntityActAux
+								StoreI IndexEntityArrayInicio
+								Load IndexPointerEntityArray
+								Add CONST_ONE
+								Store IndexPointerEntityArray
+
+		
+								// Regresamos al hilo principal
+								JumpI internallyMoveAnEntity
+
+reviewIfFuturePositionIsAGhostCanComerAdapter, HEX 000
+											   JnS eatCyanGhostAndReturnToCorrectPosition
+											   JumpI internallyMoveAnEntity
+	
+
+reviewIfFuturePositionIsARedGhost, Clear
+									// 1. Cargamos la posicion actual, y revisamos si este es un fantasma rojo.
+									Load PosicionHexadecimalEntityActAux
+									Subt CONST_GRID_COLOR_ROJO
+									SkipCond 400
+									Jump reviewIfFuturePositionIsAGreenGhost
+
+									// 2. Si seguimos aqui significa que tenemo un fantasma turquesa en frente, ahora tenemos que difurcar para pacman si se regresa o le come
+									Load CanComerFantasmas
+									Subt CONST_ONE
+									SkipCond 0C00
+									JnS reviewIfFuturePositionIsARedGhostCanComerAdapter
+									JnS beEatenByGhostAndReturnToStart
+
+									// 2. Cargamos la posicion de pacman nueva y la ponemos
+									  Load CONST_GRID_COLOR_YELLOW
+									  StoreI PosicionHexadecimalEntityActAux
+									  Load CONST_GRID_COLOR_NEGRO
+									  StoreI PosicionHexadecimalEntidadActual
+
+									   // 3. Cargamos la posicion de pacman nueva en el arreglo de posiciones
+									
+
+									   Load PosicionHexadecimalEntityActAux
+									   StoreI IndexEntityArrayInicio
+
+							
+									   
+									// Regresamos al hilo principal
+									JumpI reviewIfFuturePositionIsAGhost
+
+reviewIfFuturePositionIsARedGhostCanComerAdapter, HEX 000
+												  JnS eatRedGhostAndReturnToCorrectPosition
+												  JumpI reviewIfFuturePositionIsAGhost
+
+reviewIfFuturePositionIsAGreenGhost, Clear
+									 // 1. Cargamos la posicion actual y revisamos si este es un fantasma verde
+									 Load PosicionHexadecimalEntityActAux
+									 Subt CONST_GRID_COLOR_VERDE
+									 SkipCond 400
+									 Jump reviewIfFuturePositionIsAPinkGhost
+
+									 // 2. Si seguimos aqui significa que tenemo un fantasma turquesa en frente, ahora tenemos que difurcar para pacman si se regresa o le come
+									 Load CanComerFantasmas
+									 Subt CONST_ONE
+									 SkipCond 0C00
+									 JnS reviewIfFuturePositionIsAGreenGhostCanComerAdapter
+									 JnS beEatenByGhostAndReturnToStart
+
+// 3. Cargamos la posicion de pacman nueva y la ponemos
+									  Load CONST_GRID_COLOR_YELLOW
+									  StoreI PosicionHexadecimalEntityActAux
+									  Load CONST_GRID_COLOR_NEGRO
+									  StoreI PosicionHexadecimalEntidadActual
+
+									   // 4. Cargamos la posicion de pacman nueva en el arreglo de posiciones
+									 
+									   Load PosicionHexadecimalEntityActAux
+									   StoreI IndexEntityArrayInicio
+
+									 // Regresamos al hilo principal
+									JumpI reviewIfFuturePositionIsAGhost
+									
+reviewIfFuturePositionIsAGreenGhostCanComerAdapter, HEX 000
+													JnS eatGreenGhostAndReturnToCorrectPosition
+													JumpI reviewIfFuturePositionIsAGhost
+reviewIfFuturePositionIsAPinkGhost, Clear
+									// 1. Cargamos la posicion actual y evisamos si este es un fantasma rosado
+									Load PosicionHexadecimalEntityActAux
+									Subt CONST_GRID_COLOR_ROSADO
+									SkipCond 400
+									JumpI reviewIfFuturePositionIsAGhost
+
+									// 2. Si seguimos aqui significa que tenemo un fantasma turquesa en frente, ahora tenemos que difurcar para pacman si se regresa o le come
+									Load CanComerFantasmas
+									Subt CONST_ONE
+									SkipCond 0C00
+									JnS reviewIfFuturePositionIsAPinkGhostCanComerAdapter
+									JnS beEatenByGhostAndReturnToStart
+
+// 2. Cargamos la posicion de pacman nueva y la ponemos
+									  Load CONST_GRID_COLOR_YELLOW
+									  StoreI PosicionHexadecimalEntityActAux
+									  Load CONST_GRID_COLOR_NEGRO
+									  StoreI PosicionHexadecimalEntidadActual
+
+									   // 3. Cargamos la posicion de pacman nueva en el arreglo de posiciones
+								
+
+
+									   Load PosicionHexadecimalEntityActAux
+									   StoreI IndexEntityArrayInicio
+
+									 
+									// Regresamos al hilo principal
+									JumpI reviewIfFuturePositionIsAGhost
+
+reviewIfFuturePositionIsAPinkGhostCanComerAdapter, HEX 000
+													JnS eatPinkGhostAndReturnToCorrectPosition
+													JumpI reviewIfFuturePositionIsAGhost
+eatCyanGhostAndReturnToCorrectPosition, HEX 000
+										// En este metodo, si entramos significa  que caimos no solo en tener un fantasma turquesa enfrente,
+										// sino que tambien tenemos autorizado en el game loop comer a ese fantasma
+
+										// 1. Tenemos que mover a nuestro fantasma a su posicion inicial
+										JnS reviewCyanGhostRestartPositionAndMove
+										
+
+										// 2. Cargamos los puntos dado que si pudimos comer
+										Load PuntosDeLaPartida
+										Add CONST_TEN_IN_DEC
+										Store PuntosDeLaPartida
+										Output
+
+										// 3. Regresamos al main loop
+										JumpI reviewIfFuturePositionIsAGhost
+
+reviewCyanGhostRestartPositionAndMove, HEX 000
+									   // 1. Cargamos en una variable auxiliar la posicion original del fantasma turquesa 
+									   Load CONST_ORIGINAL_FANTASMA_TURQUESA_LOCATION
+									   Store PosicionHexadecimalGhostMovidoAux
+
+									   // 2. Revisamos cada uno de sus laterales y la posicion original para ver a donde moverlo
+									   // 2.1 Revisamos in place
+									   Load PosicionHexadecimalGhostMovidoAux
+									   Subt CONST_GRID_COLOR_NEGRO
+									   SkipCond 400
+									   JnS RegisterCyanGhostPositionInEntityArrayAndMove
+
+									   // 2.2 Revisamos a la derecha
+									   Load PosicionHexadecimalGhostMovidoAux
+									   Add CONST_ONE
+									   Store PosicionHexadecimalGhostMovidoAux
+
+									   Load PosicionHexadecimalGhostMovidoAux
+									   Subt CONST_GRID_COLOR_NEGRO
+									   SkipCond 400
+									   JnS RegisterCyanGhostPositionInEntityArrayAndMove
+
+									   // 2.3 Revisamos arriba
+									   Load PosicionHexadecimalGhostMovidoAux
+									   Subt CONST_ONE
+									   Subt CONST_SIXTEEN
+									   Store PosicionHexadecimalGhostMovidoAux
+
+									   Load PosicionHexadecimalGhostMovidoAux
+									   Subt CONST_GRID_COLOR_NEGRO
+									   SkipCond 400
+									   JnS RegisterCyanGhostPositionInEntityArrayAndMove
+
+									   // 2.4 Revisamos izquierda
+									   Load PosicionHexadecimalGhostMovidoAux
+									   ADD CONST_SIXTEEN
+									   SUBT CONST_ONE
+									   Store PosicionHexadecimalGhostMovidoAux
+
+									   Load PosicionHexadecimalGhostMovidoAux
+									   Subt CONST_GRID_COLOR_NEGRO
+									   SkipCond 400
+									   JnS RegisterCyanGhostPositionInEntityArrayAndMove
+
+									   // 2.5 Revisamos abajo
+									   Load PosicionHexadecimalGhostMovidoAux
+									   ADD CONST_ONE
+									   Add CONST_SIXTEEN
+									   Store PosicionHexadecimalGhostMovidoAux
+
+									   Load PosicionHexadecimalGhostMovidoAux
+									   Subt CONST_GRID_COLOR_NEGRO
+									   SkipCond 400
+									   JnS RegisterCyanGhostPositionInEntityArrayAndMove
+
+									   // 3. Salimos si no pudimos realizar el movimiento 
+									   JumpI reviewCyanGhostRestartPositionAndMove
+									   
+										
+RegisterCyanGhostPositionInEntityArrayAndMove, HEX 000
+									  // 1. Aqui vamos a mover la figura, y guardar la posicion a donde fue en el arreglo general de posiciones
+
+									  // 1.1 Cargamos la variable de posicion de arreglo, sumamos uno para entrar al cyan y guardamos el Aux
+									  Load IndexPointerEntityArray
+									  Store extractedPosition
+									  Load IndexEntityArrayInicio
+									  Add CONST_ONE
+									  Store IndexPointerEntityArray
+
+									  Load PosicionHexadecimalGhostMovidoAux
+									  StoreI IndexPointerEntityArray
+
+									  // 1.2 Revertimos el movimiento de indices para no desfazar el loop principal
+									  Load extractedPosition
+									  Store IndexPointerEntityArray
+
+									  // 2. Pintamos la figura dentro del mapa en la posicion correspondiente 
+									  Load CONST_GRID_COLOR_TURQUESA
+									  StoreI PosicionHexadecimalGhostMovidoAux
+
+									  // 3. Salimos
+									  JumpI reviewCyanGhostRestartPositionAndMove
+
+
+eatRedGhostAndReturnToCorrectPosition,  HEX 000
+										// En este metodo, si entramos significa  que caimos no solo en tener un fantasma turquesa enfrente,
+										// sino que tambien tenemos autorizado en el game loop comer a ese fantasma
+
+										// 1. Tenemos que mover a nuestro fantasma a su posicion inicial
+										JnS reviewRedGhostRestartPositionAndMove
+									
+
+										// 2. Cargamos los puntos dado que si pudimos comer
+										Load PuntosDeLaPartida
+										Add CONST_TEN_IN_DEC
+										Store PuntosDeLaPartida
+										Output
+
+										// 3. Regresamos al main loop
+										JumpI eatRedGhostAndReturnToCorrectPosition
+
+reviewRedGhostRestartPositionAndMove, HEX 000
+									  // Al igual que en el metodo para el fastama turquesa, tenemos que pasar por una revision inicial de la posicion posible para
+									  // el movimiento y luego moverla y guardarla
+									   // 1. Cargamos en una variable auxiliar la posicion original del fantasma turquesa 
+									   Load CONST_ORIGINAL_FANTASMA_ROJO_LOCATION
+									   Store PosicionHexadecimalGhostMovidoAux
+
+									   // 2. Revisamos cada uno de sus laterales y la posicion original para ver a donde moverlo
+									   // 2.1 Revisamos in place
+									   Load PosicionHexadecimalGhostMovidoAux
+									   Subt CONST_GRID_COLOR_NEGRO
+									   SkipCond 400
+									   JnS RegisterRedGhostPositionInEntityArrayAndMove
+
+									   // 2.2 Revisamos a la derecha
+									   Load PosicionHexadecimalGhostMovidoAux
+									   Add CONST_ONE
+									   Store PosicionHexadecimalGhostMovidoAux
+
+									   Load PosicionHexadecimalGhostMovidoAux
+									   Subt CONST_GRID_COLOR_NEGRO
+									   SkipCond 400
+									   JnS RegisterRedGhostPositionInEntityArrayAndMove
+
+									   // 2.3 Revisamos arriba
+									   Load PosicionHexadecimalGhostMovidoAux
+									   Subt CONST_ONE
+									   Subt CONST_SIXTEEN
+									   Store PosicionHexadecimalGhostMovidoAux
+
+									   Load PosicionHexadecimalGhostMovidoAux
+									   Subt CONST_GRID_COLOR_NEGRO
+									   SkipCond 400
+									   JnS RegisterRedGhostPositionInEntityArrayAndMove
+
+									   // 2.4 Revisamos izquierda
+									   Load PosicionHexadecimalGhostMovidoAux
+									   ADD CONST_SIXTEEN
+									   SUBT CONST_ONE
+									   Store PosicionHexadecimalGhostMovidoAux
+
+									   Load PosicionHexadecimalGhostMovidoAux
+									   Subt CONST_GRID_COLOR_NEGRO
+									   SkipCond 400
+									   JnS RegisterRedGhostPositionInEntityArrayAndMove
+
+									   // 2.5 Revisamos abajo
+									   Load PosicionHexadecimalGhostMovidoAux
+									   ADD CONST_ONE
+									   Add CONST_SIXTEEN
+									   Store PosicionHexadecimalGhostMovidoAux
+
+									   Load PosicionHexadecimalGhostMovidoAux
+									   Subt CONST_GRID_COLOR_NEGRO
+									   SkipCond 400
+									   JnS RegisterRedGhostPositionInEntityArrayAndMove
+
+									   // 3. Salimos si no pudimos realizar el movimiento 
+									   JumpI reviewRedGhostRestartPositionAndMove
+
+RegisterRedGhostPositionInEntityArrayAndMove, HEX 000
+									 // 1.1 Cargamos la variable de posicion de arreglo, sumamos uno para entrar al rojo y guardamos el Aux
+									  Load IndexPointerEntityArray
+									  Store extractedPosition
+									  Load IndexEntityArrayInicio
+									  Add CONST_TWO
+									  Store IndexPointerEntityArray
+
+									  Load PosicionHexadecimalGhostMovidoAux
+									  StoreI IndexPointerEntityArray
+
+									  // 1.2 Revertimos el movimiento de indices para no desfazar el loop principal
+									  Load extractedPosition
+									  Store IndexPointerEntityArray
+
+									  // 2. Pintamos la figura dentro del mapa en la posicion correspondiente 
+									  Load CONST_GRID_COLOR_ROJO
+									  StoreI PosicionHexadecimalGhostMovidoAux
+
+									  // 3. Salimos
+									  JumpI reviewRedGhostRestartPositionAndMove
+
+
+eatGreenGhostAndReturnToCorrectPosition,  HEX 000
+										// En este metodo, si entramos significa  que caimos no solo en tener un fantasma turquesa enfrente,
+										// sino que tambien tenemos autorizado en el game loop comer a ese fantasma
+
+										// 1. Tenemos que mover a nuestro fantasma a su posicion inicial
+										JnS reviewGreenGhostRestartPositionAndMove
+									
+
+										// 2. Cargamos los puntos dado que si pudimos comer
+										Load PuntosDeLaPartida
+										Add CONST_TEN_IN_DEC
+										Store PuntosDeLaPartida
+										Output
+
+										// 3. Regresamos al main loop
+										JumpI eatGreenGhostAndReturnToCorrectPosition
+
+reviewGreenGhostRestartPositionAndMove, HEX 000
+										 // Al igual que en el metodo para el fastama turquesa, tenemos que pasar por una revision inicial de la posicion posible para
+									  // el movimiento y luego moverla y guardarla
+									   // 1. Cargamos en una variable auxiliar la posicion original del fantasma verde 
+									   Load CONST_ORIGINAL_FANTASMA_VERDE_LOCATION
+									   Store PosicionHexadecimalGhostMovidoAux
+
+									   // 2. Revisamos cada uno de sus laterales y la posicion original para ver a donde moverlo
+									   // 2.1 Revisamos in place
+									   Load PosicionHexadecimalGhostMovidoAux
+									   Subt CONST_GRID_COLOR_NEGRO
+									   SkipCond 400
+									   JnS RegisterGreenGhostPositionInEntityArrayAndMove
+
+									   // 2.2 Revisamos a la derecha
+									   Load PosicionHexadecimalGhostMovidoAux
+									   Add CONST_ONE
+									   Store PosicionHexadecimalGhostMovidoAux
+
+									   Load PosicionHexadecimalGhostMovidoAux
+									   Subt CONST_GRID_COLOR_NEGRO
+									   SkipCond 400
+									   JnS RegisterGreenGhostPositionInEntityArrayAndMove
+
+									   // 2.3 Revisamos arriba
+									   Load PosicionHexadecimalGhostMovidoAux
+									   Subt CONST_ONE
+									   Subt CONST_SIXTEEN
+									   Store PosicionHexadecimalGhostMovidoAux
+
+									   Load PosicionHexadecimalGhostMovidoAux
+									   Subt CONST_GRID_COLOR_NEGRO
+									   SkipCond 400
+									   JnS RegisterGreenGhostPositionInEntityArrayAndMove
+
+									   // 2.4 Revisamos izquierda
+									   Load PosicionHexadecimalGhostMovidoAux
+									   ADD CONST_SIXTEEN
+									   SUBT CONST_ONE
+									   Store PosicionHexadecimalGhostMovidoAux
+
+									   Load PosicionHexadecimalGhostMovidoAux
+									   Subt CONST_GRID_COLOR_NEGRO
+									   SkipCond 400
+									   JnS RegisterGreenGhostPositionInEntityArrayAndMove
+
+									   // 2.5 Revisamos abajo
+									   Load PosicionHexadecimalGhostMovidoAux
+									   ADD CONST_ONE
+									   Add CONST_SIXTEEN
+									   Store PosicionHexadecimalGhostMovidoAux
+
+									   Load PosicionHexadecimalGhostMovidoAux
+									   Subt CONST_GRID_COLOR_NEGRO
+									   SkipCond 400
+									   JnS RegisterGreenGhostPositionInEntityArrayAndMove
+
+									   // 3. Salimos si no pudimos realizar el movimiento 
+									   JumpI reviewGreenGhostRestartPositionAndMove
+
+RegisterGreenGhostPositionInEntityArrayAndMove, HEX 000
+									   // 1.1 Cargamos la variable de posicion de arreglo, sumamos uno para entrar al rojo y guardamos el Aux
+									   Load IndexPointerEntityArray
+									  Store extractedPosition
+									  Load IndexEntityArrayInicio
+									  Add CONST_THREE
+									  Store IndexPointerEntityArray
+
+									  Load PosicionHexadecimalGhostMovidoAux
+									  StoreI IndexPointerEntityArray
+
+									  // 1.2 Revertimos el movimiento de indices para no desfazar el loop principal
+									  Load extractedPosition
+									  Store IndexPointerEntityArray
+
+									  // 2. Pintamos la figura dentro del mapa en la posicion correspondiente 
+									  Load CONST_GRID_COLOR_VERDE
+									  StoreI PosicionHexadecimalGhostMovidoAux
+
+									  // 3. Salimos
+									  JumpI reviewGreenGhostRestartPositionAndMove
+
+
+eatPinkGhostAndReturnToCorrectPosition, HEX 000
+									  // Al igual que para todos los fantasmas anteriores, debemos de tener en cuenta a donde nos podemos mover
+									  // 1. Tenemos que mover a nuestro fantasma a su posicion inicial
+										JnS reviewPinkGhostRestartPositionAndMove
+									
+
+										// 2. Cargamos los puntos dado que si pudimos comer
+										Load PuntosDeLaPartida
+										Add CONST_TEN_IN_DEC
+										Store PuntosDeLaPartida
+										Output
+
+										// 3. Regresamos al main loop
+										JumpI eatPinkGhostAndReturnToCorrectPosition
+
+reviewPinkGhostRestartPositionAndMove, HEX 000
+										 // Al igual que en el metodo para el fastama turquesa, tenemos que pasar por una revision inicial de la posicion posible para
+									  // el movimiento y luego moverla y guardarla
+									   // 1. Cargamos en una variable auxiliar la posicion original del fantasma verde 
+									   Load CONST_ORIGINAL_FANTASMA_ROSADO_LOCATION
+									   Store PosicionHexadecimalGhostMovidoAux
+
+									   // 2. Revisamos cada uno de sus laterales y la posicion original para ver a donde moverlo
+									   // 2.1 Revisamos in place
+									   Load PosicionHexadecimalGhostMovidoAux
+									   Subt CONST_GRID_COLOR_NEGRO
+									   SkipCond 400
+									   JnS RegisterPinkGhostPositionInEntityArrayAndMove
+
+									   // 2.2 Revisamos a la derecha
+									   Load PosicionHexadecimalGhostMovidoAux
+									   Add CONST_ONE
+									   Store PosicionHexadecimalGhostMovidoAux
+
+									   Load PosicionHexadecimalGhostMovidoAux
+									   Subt CONST_GRID_COLOR_NEGRO
+									   SkipCond 400
+									   JnS RegisterPinkGhostPositionInEntityArrayAndMove
+
+									   // 2.3 Revisamos arriba
+									   Load PosicionHexadecimalGhostMovidoAux
+									   Subt CONST_ONE
+									   Subt CONST_SIXTEEN
+									   Store PosicionHexadecimalGhostMovidoAux
+
+									   Load PosicionHexadecimalGhostMovidoAux
+									   Subt CONST_GRID_COLOR_NEGRO
+									   SkipCond 400
+									   JnS RegisterPinkGhostPositionInEntityArrayAndMove
+
+									   // 2.4 Revisamos izquierda
+									   Load PosicionHexadecimalGhostMovidoAux
+									   ADD CONST_SIXTEEN
+									   SUBT CONST_ONE
+									   Store PosicionHexadecimalGhostMovidoAux
+
+									   Load PosicionHexadecimalGhostMovidoAux
+									   Subt CONST_GRID_COLOR_NEGRO
+									   SkipCond 400
+									   JnS RegisterPinkGhostPositionInEntityArrayAndMove
+
+									   // 2.5 Revisamos abajo
+									   Load PosicionHexadecimalGhostMovidoAux
+									   ADD CONST_ONE
+									   Add CONST_SIXTEEN
+									   Store PosicionHexadecimalGhostMovidoAux
+
+									   Load PosicionHexadecimalGhostMovidoAux
+									   Subt CONST_GRID_COLOR_NEGRO
+									   SkipCond 400
+									   JnS RegisterPinkGhostPositionInEntityArrayAndMove
+
+									   // 3. Salimos si no pudimos realizar el movimiento 
+									   JumpI reviewPinkGhostRestartPositionAndMove
+
+RegisterPinkGhostPositionInEntityArrayAndMove, HEX 000
+									    // 1.1 Cargamos la variable de posicion de arreglo, sumamos uno para entrar al rosado y guardamos el Aux
+									   Load IndexPointerEntityArray
+									  Store extractedPosition
+									  Load IndexEntityArrayInicio
+									  Add CONST_FOUR
+									  Store IndexPointerEntityArray
+
+									  Load PosicionHexadecimalGhostMovidoAux
+									  StoreI IndexPointerEntityArray
+
+									  // 1.2 Revertimos el movimiento de indices para no desfazar el loop principal
+									  Load extractedPosition
+									  Store IndexPointerEntityArray
+
+									  // 2. Pintamos la figura dentro del mapa en la posicion correspondiente 
+									  Load CONST_GRID_COLOR_ROSADO
+									  StoreI PosicionHexadecimalGhostMovidoAux
+
+									  // 3. Salimos
+									  JumpI reviewPinkGhostRestartPositionAndMove
+
+
+beEatenByGhostAndReturnToStart, HEX 000
+								// En este caso, regresamos a pacman a la posicion inicial, esto claro esta dependiendo de la posicion a la que tiene  que ir y sy
+								// hay algo ahi
+
+								// Paso Base: Modificamos total de vidas
+								Load ContadorDeVidas
+								Subt CONST_ONE
+								Store ContadorDeVidas
+
+								// 1. Cargamos la posicion de pacman anterior
+								Load CONST_ORIGINAL_PACMAN_LOCATION
+								Store PosicionHexadecimalEntityActAux
+
+								// 2. Revisamos si tenemos alguna colision
+								// 2.1 Revisamos si la posicion correcta tiene una colision
+								LoadI PosicionHexadecimalEntityActAux
+								Subt CONST_GRID_COLOR_NEGRO
+								SkipCond 0C00
+								JumpI beEatenByGhostAndReturnToStart
+
+								// 2.2 Si no se pudo directamente, revisamos a la derecha
+								Load PosicionHexadecimalEntityActAux
+								Add CONST_ONE
+								Store PosicionHexadecimalEntityActAux
+								
+								LoadI PosicionHexadecimalEntityActAux
+								Subt CONST_GRID_COLOR_NEGRO
+								SkipCond 0C00
+								JumpI beEatenByGhostAndReturnToStart
+
+								// 2.3 Revertimos posicion anterior y revisamos arriba
+								Load PosicionHexadecimalEntityActAux
+								Subt CONST_ONE
+								Subt CONST_SIXTEEN
+								Store PosicionHexadecimalEntityActAux
+
+								LoadI PosicionHexadecimalEntityActAux
+								Subt CONST_GRID_COLOR_NEGRO
+								SkipCond 0C00 
+								JumpI beEatenByGhostAndReturnToStart
+
+								// 2.4 Revertimos posicion y revisamos izquierda
+								Load PosicionHexadecimalEntityActAux
+								Add CONST_SIXTEEN
+								Subt CONST_ONE
+								Store PosicionHexadecimalEntityActAux
+
+								Load PosicionHexadecimalEntityActAux
+								Subt CONST_GRID_COLOR_NEGRO
+								SkipCond 0C00
+								JumpI beEatenByGhostAndReturnToStart
+
+								// 2.5 Revertimos posicion y revisamos abajo
+								Load PosicionHexadecimalEntityActAux
+								Add CONST_ONE
+								Add CONST_SIXTEEN
+								Store PosicionHexadecimalEntityActAux
+
+								Load PosicionHexadecimalEntityActAux
+								Subt CONST_GRID_COLOR_NEGRO
+								SkipCond 0C00
+								JumpI beEatenByGhostAndReturnToStart
+
+								// 2.6 Si no se puede hacer nada, no deberiamos llegar aqui entonces 
+								JumpI beEatenByGhostAndReturnToStart
+
 
 
 reviewAndPaintIfEntityisCyanGhost, Clear
@@ -302,8 +989,15 @@ reviewAndPaintIfEntityisCyanGhost, Clear
 									// siempre agarramos aqui el color de la posicion nueva que va a tener.
 									LoadI PosicionHexadecimalEntidadActual
 									Store ColorTemp
+									JnS ActualizarIndexEntity
+									
 
-									//! Interceptamos aqui si es naranja, si el color guardado es naranaja simplemente regresamos guardamos
+									// ! Antes de realizar el movimiento, debemos interceptar si la posicion a donde vamos es pacman
+									Load ColorTemp
+									Subt CONST_GRID_COLOR_YELLOW
+									SkipCond 0C00
+									JnS reviewCyanGhostIfEatenByOrEatsPacman
+									
 									LoadI IndexColorAnterior
 									StoreI PosicionHexadecimalEntidadAnterior
 
@@ -312,10 +1006,43 @@ reviewAndPaintIfEntityisCyanGhost, Clear
 									StoreI PosicionHexadecimalEntidadActual
 
 									
-									JnS ActualizarIndexEntity
+									
 									Jump IndexMovimientoMasUnoYReconstruccionDeArreglo
 
+reviewCyanGhostIfEatenByOrEatsPacman, HEX 000
+									  // 1. Cargamos el valor de la constante para ver si tenemos que pasar al metodo de comer 
+									  Load CanComerFantasmas
+									  Subt CONST_ONE
+									  SkipCond 0C00
+									  JnS reDirectToEatCyanGhostAndReturnToCorrectPosition
+									  JnS beEatenByGhostAndReturnToStart
 
+									  // 2. Cargamos la posicion de pacman nueva y la ponemos
+									  Load CONST_GRID_COLOR_YELLOW
+									  StoreI PosicionHexadecimalEntityActAux
+									  Load CONST_GRID_COLOR_NEGRO
+									  StoreI PosicionHexadecimalEntidadActual
+
+									   // 3. Cargamos la posicion de pacman nueva en el arreglo de posiciones
+									   Load IndexPointerEntityArray
+									   Store extractedPosition
+
+
+									   Load PosicionHexadecimalEntityActAux
+									   StoreI IndexEntityArrayInicio
+
+									   Load extractedPosition
+									   Store IndexPointerEntityArray
+									   
+									  Load CONST_GRID_COLOR_NEGRO
+									  StoreI PosicionHexadecimalEntidadAnterior
+
+									  // 2. Regresamos normalemtne 
+									  Jump IndexMovimientoMasUnoYReconstruccionDeArreglo
+
+reDirectToEatCyanGhostAndReturnToCorrectPosition, HEX 000
+												  JnS eatCyanGhostAndReturnToCorrectPosition
+												  Jump IndexMovimientoMasUnoYReconstruccionDeArreglo
 reviewAndPaintIfEntitiyisRedGhost,  Clear
 									Load isEntityRojo
 									Subt CONST_ONE
@@ -324,18 +1051,57 @@ reviewAndPaintIfEntitiyisRedGhost,  Clear
 
 									LoadI PosicionHexadecimalEntidadActual
 									Store ColorTemp
-							
+									JnS ActualizarIndexEntity
 
 									
+									Load ColorTemp
+									Subt CONST_GRID_COLOR_YELLOW
+									SkipCond 0C00
+									JnS reviewRedGhostIfEatenByOrEatsPacman
 									
 									LoadI IndexColorAnterior
 									StoreI PosicionHexadecimalEntidadAnterior
 									Load CONST_GRID_COLOR_ROJO
 									StoreI PosicionHexadecimalEntidadActual
 									
-									JnS ActualizarIndexEntity
+									
 									Jump IndexMovimientoMasUnoYReconstruccionDeArreglo
 
+reviewRedGhostIfEatenByOrEatsPacman, HEX 000
+									 // 1. Cargamos el valor de la constante para ver si tenemos que pasar al modo comer 
+									 Load CanComerFantasmas
+									 Subt CONST_ONE
+									 SkipCond 0C00
+									 JnS reDirectToEatRedGhostAndReturnToCorrectPosition
+									 JnS beEatenByGhostAndReturnToStart
+
+									 // 2. Cargamos la posicion de pacman nueva y la ponemos
+									  Load CONST_GRID_COLOR_YELLOW
+									  StoreI PosicionHexadecimalEntityActAux
+									  Load CONST_GRID_COLOR_NEGRO
+									  StoreI PosicionHexadecimalEntidadActual
+
+									   // 3. Cargamos la posicion de pacman nueva en el arreglo de posiciones
+									   Load IndexPointerEntityArray
+									   Store extractedPosition
+
+
+									   Load PosicionHexadecimalEntityActAux
+									   StoreI IndexEntityArrayInicio
+
+									   Load extractedPosition
+									   Store IndexPointerEntityArray
+									   
+									  Load CONST_GRID_COLOR_NEGRO
+									  StoreI PosicionHexadecimalEntidadAnterior
+									
+
+									 //2. Regresamos normalmente 
+									 Jump IndexMovimientoMasUnoYReconstruccionDeArreglo
+
+reDirectToEatRedGhostAndReturnToCorrectPosition, HEX 000
+									JnS eatRedGhostAndReturnToCorrectPosition
+									Jump IndexMovimientoMasUnoYReconstruccionDeArreglo
 reviewAndPaintIfEntityisGreenGhost, Clear
 									Load isEntityVerde
 									Subt CONST_ONE
@@ -344,24 +1110,69 @@ reviewAndPaintIfEntityisGreenGhost, Clear
 
 									LoadI PosicionHexadecimalEntidadActual
 									Store ColorTemp
-									
+									JnS ActualizarIndexEntity
+
+									// Revisamos pacman en donde nos tenemos que mover
+									Load ColorTemp
+									Subt CONST_GRID_COLOR_YELLOW
+									SkipCond 0C00
+									JnS reviewGreenGhostIfEatenByOrEatsPacman
 									
 									LoadI IndexColorAnterior
 									StoreI PosicionHexadecimalEntidadAnterior
+									
 									Load CONST_GRID_COLOR_VERDE
 									StoreI PosicionHexadecimalEntidadActual
 
-					
 									
-									JnS ActualizarIndexEntity
+									
 									Jump IndexMovimientoMasUnoYReconstruccionDeArreglo
-									
+
+reviewGreenGhostIfEatenByOrEatsPacman, HEX 000
+									  //1.  Cargamos el valor de la constante para ver si comemos o no
+									  Load CanComerFantasmas
+									  Subt CONST_ONE
+									  SkipCond 0C00
+									  JnS reDirectToEatGreenGhostAndReturnToCorrectPosition
+									  JnS beEatenByGhostAndReturnToStart
+
+									  // 2. Cargamos la posicion de pacman nueva y la ponemos
+									  Load CONST_GRID_COLOR_YELLOW
+									  StoreI PosicionHexadecimalEntityActAux
+									  Load CONST_GRID_COLOR_NEGRO
+									  StoreI PosicionHexadecimalEntidadActual
+
+									   // 3. Cargamos la posicion de pacman nueva en el arreglo de posiciones
+									   Load IndexPointerEntityArray
+									   Store extractedPosition
+
+
+									   Load PosicionHexadecimalEntityActAux
+									   StoreI IndexEntityArrayInicio
+
+									   Load extractedPosition
+									   Store IndexPointerEntityArray
+
+									   Load CONST_GRID_COLOR_NEGRO
+									  StoreI PosicionHexadecimalEntidadAnterior
+
+									  // 2. Regresamos normalmente
+									  Jump IndexMovimientoMasUnoYReconstruccionDeArreglo
+
+reDirectToEatGreenGhostAndReturnToCorrectPosition, HEX 000
+													JnS eatGreenGhostAndReturnToCorrectPosition
+													Jump IndexMovimientoMasUnoYReconstruccionDeArreglo
+
 reviewAndPaintIfEtityisPinkGhost,   Clear	
 								    LoadI PosicionHexadecimalEntidadActual
 									Store ColorTemp
-									// Revision Naranja
+									JnS ActualizarIndexEntity
 									
-									
+									// 1. Interceptamos si existe pacman en nuestro destino
+									Load ColorTemp
+									Subt CONST_GRID_COLOR_YELLOW
+									SkipCond 0C00 
+									JnS reviewPinkGhostIfEatenByOrEatsPacman
 									
 									LoadI IndexColorAnterior
 									StoreI PosicionHexadecimalEntidadAnterior
@@ -371,11 +1182,46 @@ reviewAndPaintIfEtityisPinkGhost,   Clear
 
 									
 									
-									JnS ActualizarIndexEntity
+									
 									Jump IndexMovimientoMasUnoYReconstruccionDeArreglo
 
+reviewPinkGhostIfEatenByOrEatsPacman, HEX 000
+									  //1.  Cargamos el valor de la constante para ver si comemos o no
+									  Load CanComerFantasmas
+									  Subt CONST_ONE
+									  SkipCond 0C00
+									  JnS reDirectToEatPinkGhostAndReturnToCorrectPosition
+									  JnS beEatenByGhostAndReturnToStart
+
+									  
+
+									  // 2. Cargamos la posicion de pacman nueva y la ponemos
+									  Load CONST_GRID_COLOR_YELLOW
+									  StoreI PosicionHexadecimalEntityActAux
+									  Load CONST_GRID_COLOR_NEGRO
+									  StoreI PosicionHexadecimalEntidadActual
+
+									   // 3. Cargamos la posicion de pacman nueva en el arreglo de posiciones
+									   Load IndexPointerEntityArray
+									   Store extractedPosition
 
 
+									   Load PosicionHexadecimalEntityActAux
+									   StoreI IndexEntityArrayInicio
+
+									   Load extractedPosition
+									   Store IndexPointerEntityArray
+									   
+
+									  Load CONST_GRID_COLOR_NEGRO
+									  StoreI PosicionHexadecimalEntidadAnterior
+									  // 2. Regresamos normalmente
+									  JumpI reviewPinkGhostIfEatenByOrEatsPacman
+
+
+reDirectToEatPinkGhostAndReturnToCorrectPosition, HEX 000
+												  JnS eatPinkGhostAndReturnToCorrectPosition
+												  Jump IndexMovimientoMasUnoYReconstruccionDeArreglo
 ActualizarIndexEntity, HEX 000
 					   Load PosicionHexadecimalEntidadActual
 					   StoreI IndexPointerEntityArray
@@ -385,16 +1231,21 @@ ActualizarIndexEntity, HEX 000
 					   JumpI ActualizarIndexEntity
 
 
-
-
 SumarMonedaATotal,   Clear
-				     Load PuntosDeLaPartida
-		             Add CONST_ONE
-		             Store PuntosDeLaPartida
+				     Load PuntosDeLaPartidaAux
+					 Add CONST_ONE
+					 Store PuntosDeLaPartidaAux
+		             
+		          	 Load PuntosDeLaPartida
+					 Add CONST_ONE
+					 Store PuntosDeLaPartida
 					 Output 
+					 Load PuntosDeLaPartidaAux
+					 Subt CONST_TOTAL_MONEDAS
+					 SkipCond 400 
 		             Jump IndexMovimientoMasUnoYReconstruccionDeArreglo
-
-
+					 END2, Halt
+				
 IndexMovimientoMasUnoYReconstruccionDeArreglo, Clear
 					 Load isEntityPacman
 						Subt CONST_ONE
@@ -445,7 +1296,10 @@ RebuildEntities, 	Clear
 					StoreI LocationTemp
 					Load IndexEntityArrayInicio
 					Store IndexEntityArrayCopia
+					Load ContadorDeVidas
+					SkipCond 400
 					JumpI internallyMoveAnEntity
+					Jump whileTrue
 					
 RevisionNaranja, Load ColorTemp
 				Subt CONST_GRID_COLOR_NARANJA
@@ -519,7 +1373,7 @@ reviewIfMovementResetIsNeeded, HEX 000
 							   /*If zero early exit*/
 							   Load CONST_ONE_HUNDRED
 							   Subt ContadorMovimientosRealizadosEnDecimal
-							    SkipCond 000
+							    SkipCond 0C00
 							   JumpI reviewIfMovementResetIsNeeded
 							   Load CONST_ONE_HUNDRED
 							   Output
@@ -586,9 +1440,6 @@ verificarFantasmaRosado, HEX 000
                         Store isEntityRosado
                         JumpI verificarEntidadEsPacman
 		
-							
-
-
 
 obtenerColumnaYFila, HEX 000
 					 JnS encerarTodosLosBooleanosDeEntidades
@@ -689,7 +1540,7 @@ cargaDeMapaYEntidadesAlDisplay, HEX 000
 								Store Counter
 								Subt CONST_LIMITE_MOVIMIENTOS
 								SkipCond 800
-								Jump intMainLoopLoadGame	
+								Jump intMainLoopLoadGame
 									 
 /*Variables*/
 /* @defintion: variables auxiliares requeridas para el manejo de modulo y division
@@ -702,14 +1553,17 @@ CONST_ONE, DEC 1
 CONST_TWO, DEC 2
 CONST_THREE, DEC 3
 CONST_FOUR, DEC 4 
+CONST_FIVE, DEC 5
 CONST_TEN_IN_DEC, DEC 10
 CONST_TEN_IN_HEX, HEX 10
 CONST_DISPLAY_LIMIT, DEC 15
 CONST_SIXTEEN, DEC 16
 CONST_ONE_HUNDRED, DEC 100
+CONST_TOTAL_MONEDAS, DEC 26
+
 CONST_LIMITE_MOVIMIENTOS, DEC 255
 CONST_TWO_FIFTY_SIX, DEC 256
-CONST_POSICION_INICIAL_ARREGLO_MOVIMIENTOS, HEX 357 /* cambiar cuando añades lineas
+CONST_POSICION_INICIAL_ARREGLO_MOVIMIENTOS, HEX 563 /* cambiar cuando añades lineas
 CONST_MOVIMIENTO_DERECHA, DEC 1
 CONST_MOVIMIENTO_ARRIBA, DEC 2
 CONST_MOVIMIENTO_IZQUIERDA, DEC 3
@@ -727,20 +1581,24 @@ CONST_GRID_COLOR_NARANJA, HEX F5A0
 CONST_GRID_COLOR_MONEDA, HEX FFFF
 /* @definition: Variables requeridas para el manejo de posiciones iniciales en caso de tener que reiniciar 
 /* las posiciones de los fantasmas o de pacman a las posiciones iniciales
-CONST_ORIGINAL_PACMAN_LOCATION, HEX FB7
-CONST_ORIGINAL_FANTASMA_TURQUESA_LOCATION, HEX F77
-CONST_ORIGINAL_FANTASMA_ROJO_LOCATION, HEX F67
-CONST_ORIGINAL_FANTASMA_VERDE_LOCATION, HEX F78
-CONST_ORIGINAL_FANTASMA_ROSADO_LOCATION, HEX F68
+CONST_ORIGINAL_PACMAN_LOCATION, HEX FB7 /*cambiar en cambio de mapa
+CONST_ORIGINAL_FANTASMA_TURQUESA_LOCATION, HEX F77  /*cambiar en cambio de mapa
+CONST_ORIGINAL_FANTASMA_ROJO_LOCATION, HEX F67  /*cambiar en cambio de mapa
+CONST_ORIGINAL_FANTASMA_VERDE_LOCATION, HEX F78  /*cambiar en cambio de mapa
+CONST_ORIGINAL_FANTASMA_ROSADO_LOCATION, HEX F68  /*cambiar en cambio de mapa
 /* @definition: Variables requeridas para el manejo del ciclo de vida del programa
 /* contadores, vidas, puntaje.
 ContadorDeVidas, DEC 5
 CanComerFantasmas, DEC 0
+CONST_MOVIMIENTOS_PERMITIDOS_PARA_COMER, DEC 32
+ContadorMovimientosHechosConPowerUpComer, DEC 0
 ContadorMovimientosRealizadosEnDecimal, DEC 0
 Counter, DEC 0
+ContadorRevisionInicial, DEC 0 
 PuntosDeLaPartida, DEC 0
+PuntosDeLaPartidaAux, DEC 0
 ContadorDeEntidadEnAnalisis, DEC 0
-IndexPointerToMovementArray, HEX 357 /*cambio cuando añades lineas
+IndexPointerToMovementArray, HEX 563 /*cambio cuando añades lineas
 IndexDisplay, HEX F00
 /* @definition: Varaibles requeridas para el manejo posicional y el analisis de las entidades dentro 
 /* del juego.
@@ -751,12 +1609,14 @@ CoordenadaEntityColumnaAnterior, DEC 0
 PosicionHexadecimalEntidadActual, HEX 000
 PosicionHexadecimalEntidadAnterior, HEX 000
 PosicionHexadecimalEntityActAux, HEX 000
-IndexPointerEntityArray, HEX 22B /*cambio cuando añades lineas
-IndexEntityArrayCopia, HEX 22B /*cambio cuando añades lineas
-IndexEntityArrayInicio, Hex 22B /*cambio cuando añades lineas
+PosicionHexadecimalGhostMovidoAux, HEX 000
+IndexPointerEntityArray, HEX 456 /*cambio cuando añades lineas
+IndexEntityArrayCopia, HEX 456 /*cambio cuando añades lineas
+IndexEntityArrayInicio, Hex 456 /*cambio cuando añades lineas
 ithPositionInMovementArray, DEC 0
-IndexPointerToColoresArray, HEX 257 /*cambio cuando añades lineas
+IndexPointerToColoresArray, HEX 463 /*cambio cuando añades lineas
 LocationTemp, HEX 000
+positionRevision, HEX 000
 /* @definition: Variables requeridas para el manejo de control logico del programa, especificamente, del tipo de estructura que 
 /* estamos revisando, como por ejemplo, que tipo de fantasma es
 isEntityPacman, DEC 0
@@ -766,51 +1626,20 @@ isEntityVerde, DEC 0
 isEntityRosado, DEC 0
 RepiteMovimiento, DEC 0
 /* @definition: Variables controladores para la informacion de memoria que se trae de la aplicacion interna
-EntityArray, HEX FB7
+EntityArray, HEX FB7  /*cambiar en cambio de mapa
 			HEX F77
 			HEX F67
 			HEX F78
 			HEX F68
 ColorTemp, HEX 000
-IndexColorAnterior, HEX 234 /* Cambiar siempre a la posicion de memoria a donde apunta ColorAnteriorArray 
+IndexColorAnterior, HEX 45F /* Cambiar siempre a la posicion de memoria a donde apunta ColorAnteriorArray 
 							/* en su primera posicion
-IndexColorAnteriorInicio, HEX 234/*Duplicar el inicio para poder regresar
-IndexColorAnteriorAux, HEX 234/*Duplicar el inicio para poder regresar
+IndexColorAnteriorInicio, HEX 45F /*Duplicar el inicio para poder regresar
+IndexColorAnteriorAux, HEX 45F /*Duplicar el inicio para poder regresar
 ColorAnteriorArray, Hex 000
 					Hex 000
 					Hex 000
 					Hex 000
-normalPowerUpsLocations, HEX F26
-                     HEX F27
-                     HEX F36
-                     HEX F37
-                     HEX F5A
-                     HEX F5B
-                     HEX F5C
-                     HEX F5D
-                     HEX F7F
-                     HEX F8F
-                     HEX F9F
-                     HEX FAF
-                     HEX FB1
-                     HEX FB2
-                     HEX FB3
-                     HEX FB4
-                     HEX FBA
-                     HEX FBB
-                     HEX FBC
-                     HEX FBD
-                     HEX FC1
-                     HEX FC2
-                     HEX FC3
-                     HEX FC4
-eatOthersPowerUpsLocations, HEX F0F
-                    HEX FE2
-pacmanOriginalLocation, HEX FB7
-redGhostOriginalLocation, HEX F67
-pinkGhostOriginalLocation, HEX F68
-cyanGhostOriginalLocation, HEX F77
-greenGhostOriginalLocation, HEX F78
 colorLocationArrayForRow, HEX 000
                      HEX FFFF
                      HEX 000
@@ -899,7 +1728,7 @@ colorLocationArrayForRow, HEX 000
                      HEX 000
                      HEX 000
                      HEX 000
-                     HEX F5A0
+                     HEX 000
                      HEX 000
                      HEX FFFF
                      HEX FFFF
@@ -993,9 +1822,9 @@ colorLocationArrayForRow, HEX 000
                      HEX FFFF
                      HEX FFFF
                      HEX 000
-                     HEX 000
+                     HEX f5A0
                      HEX 6767
-                     HEX 000
+                     HEX f5a0
                      HEX 000
                      HEX FFFF
                      HEX FFFF
