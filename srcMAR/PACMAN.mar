@@ -107,7 +107,7 @@ Revision, LoadI IndexEntityArrayCopia
 whileLivesAreHigherThanZero, HEX 000
 							 whileTrue, Clear
 										Load ContadorDeVidas
-										SkipCond 0C00 /*Saltamos si llegamos a cero
+										SkipCond 800 /*Saltamos si llegamos a cero
 										JumpI whileLivesAreHigherThanZero
 										/*Si tenemos vidas todavia, pasamos a la logica principal 
 										/* que nos permite continuar la ejecucion
