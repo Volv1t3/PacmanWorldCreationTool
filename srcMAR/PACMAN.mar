@@ -21,12 +21,22 @@ intMainLoopLoadGame, Clear
 					 Load CONST_ONE
 					 Halt
 
+/* Metodo que permite revisar si el sistema ya se encuentra en el limite de los movimientos del poder antes de pasar a un movimiento real 
+/* este metodo se llama antes de realizar la validacion de paredes dado que nos permite conocer si los movimientos registrados para el 
+/* total de movimientos del powerup canComer son negativos, y si lo son paramos la partida completamente.
+/* @param: CONST_MOVIIENTOS_PERMITIDOS_PARA_COMER: constante de movimientos registrados antes de la ejecucion, estos se revisan aqui por valores negativos.
 RevisionContadorMovimientosPoder, HEX 000
 									Load CONST_MOVIMIENTOS_PERMITIDOS_PARA_COMER
 									SkipCond 800
 									Halt
 									JumpI RevisionContadorMovimientosPoder
 
+/* metodo que permite validar que las paredes alrededor de las entidades de los fantasmas no sea completamente enroscante, es decir, que 
+/* los fantasmas tengan una salida de movimiento hacia una parte del mapa, este nos permite revisar si estamos en un mapa en donde 
+/* los fantasmas no puedan moverse para nada, con lo que frenamos la partida si es asi.
+/* @param: IndexEntityArrayCopia: parametro que determina la posicion inicial del arreglo de entidades
+/* @param: ContadorRevisionInicial: variable usada para mantener un control sobre la cantidad de entidades que se han revisado hasta el momento, cinco especificamente 
+/* para controlar el loop de esta seccion de control de entidades
 ValidacionParedes, HEX 000
 					Load IndexEntityArrayCopia
 					Subt CONST_ONE
@@ -42,6 +52,16 @@ ValidacionParedes, HEX 000
 								SkipCond 800
 								Jump Revision
 								JumpI ValidacionParedes
+
+/* Metodo que permite conocer el color de la cuadrilla siguiente a la posicion actual de las figuras, lo que nos permite revisar si estas tienen una
+/* colision imminente en alguna de sus posiciones, lo que no nos permitiria movernos. En este lazo, si tenemos una cuadrilla azul, pasamos a la siguiente para revisar si 
+/* la derecha, arriba, izquierda o abajo, tienen o no un espacio en donde moverse, si para cualquier entidad esto no se cumple, entonces el programa para en el ultimo halt de
+/* este codigo, en cualquier otro caso, el sistema regresa rapidamente en un modelo early-return hacia  el loop de entidades, dado que tenemos una posicion posible
+/* @param: positionRevision: variable usada para mantener un registro de la posicion siguiente de la entidad que se va a mover en el caso de realizar un movimiento en 
+/* el loop principal, en base a esto, el sistema determina si existe un lugar para moverse o si no.
+/* @param: CONST_GRID_COLOR_BLUE: constante hexadecimal usada para representar el color azul determinado para las paredes de la simulacion de Pac-man
+/* @param: CONST_SIXTEEN, CONST_ONE: constantes numericas especificas usadas para manipular la posicion en la pantalla del puntero a esta, con lo que se puede trabajar para 
+/* analizar la posicion siguiente rapidamente.
 Revision, LoadI IndexEntityArrayCopia
 				Add CONST_ONE
 				Store positionRevision
@@ -101,7 +121,12 @@ whileLivesAreHigherThanZero, HEX 000
 
 /* Loop interno, secundario pero crucial para el manejo de metodos de validacion de movimientos, de vidas, llamadas a
 /* metodos de validacion de datos, etc. Este bloque se realiza mientras el valor del Contador no llegue a 100, en cuyo caso
-/* reiniciamos el contador en el 
+/* reiniciamos el contador en el. Internamente, el sistema carga un valor de cero alc ontador que se uso anteriormente para cargar el mapa y obtener la posicion de
+/* un fantasma y otras varaibles, es decir, la reseteamos para ser usada en otras partes. Dentro del siguiente loop whileMovementAreNotOneHundred, el programa realiza revisiones constantes
+/* con respecto del contador de movimientos decimales para conocer si hemos llegado al limite de movimientos requeridos por cada grupo de datos, con esto interceptamos el retorno y trabajamos 
+/* para resetear los valores de movimientos en otra seccion.
+/* @param: ContadorMovimientosRealizadosEnDecimal : variable que representa el contador especifico interno de movimientos realizados en una sola iteracion del juego, inicia siempre en 0 y se mueve hacia 99. Se 
+/* usa internamente para revisar si hemos superadoe el limite de vidas (revisado como si nuestra condicion se convierta en negativa), lo que indicaria que debemos salir y reiniciar el movimiento.
 internalGeneralMovementAndLogicLoops, HEX 000
 /* Para realizar este metodo, debemos primero revisar que entidad es la que estamos analizando, y conocinedo esto debemos de calcular la 
 /* columna y la fila en la que esta entidad se encuentra.
@@ -154,7 +179,11 @@ internalGeneralMovementAndLogicLoops, HEX 000
 																	   // Luego de revisar si tenemos movimientos, revisamos
 																	   // si tenemos movimientos para saltar al loop
 																	   Jump whileMovementsAreNotOneHundred
-																	  
+
+/* Metodo usado para disminuir la cantidad de movimientoes realizados (desde los 32 configurables) hacia 0 de los movimientos realizables cuando pacman tiene un poder.
+/* Esta constante solo se actualiza en diferentes secciones que involucran a pacman, dado que no se considera que los movimientos de este estilo se deberian de disminuir
+/* con todas las figuras moviendose.
+/* @param: ContadorDemovimientoesHechosConPowerUpComer: variable usada para mantener un contador de movimientos realizados durante la partida cuando pacman tiene un powerup activado.
 decrementByOneCanComerTimer, HEX 000
 							 // Disminuimos en uno el movimiento, dado que luego de haber hecho un movimiento para determinar la constante, 
 							 // todos los movimientos restantes cuentan como uno menos para este contador.
@@ -162,13 +191,27 @@ decrementByOneCanComerTimer, HEX 000
 							 Subt CONST_ONE
 							 Store ContadorMovimientosHechosConPowerUpComer
 							 JumpI decrementByOneCanComerTimer
+
+/* Metodo usado para eliminar el estado de que puede comer en el caso de tener ya los 32 movimientos hechos en la variable de estado contadora. En este caso, si se cumple, el programa 
+/*desabilita el booleano del powerup cargando el valor de cero hacia el sistema
+/* @param: CanComerFantasmas: variable de tipo decimal booleana, que solo guarda 0 o 1, usada para manejar el estado del juego cuando pacman come un powerup.
 removeCanEatState, HEX 000
 					// 1. Quitamos al condicion para poder comer a otros
 					Load CanComerFantasmas
 					Load CONST_ZERO
 					Store CanComerFantasmas
 					JumpI removeCanEatState
-									  
+
+/* Metodo adaptador y super que permite mantener un manejo desacopla del movimiento, al separar los concerns de varios metodos a diferentes metodos JnS para el mnejo de las posiciones a las que se debe 
+/* mover el programa. En primera instancia, el movimiento carga el valor, al AC, del valor del puntero hacia el arreglo de movimientos, lo que le permite al programa tener un valor con el que comparar con 
+/* nuestras constantes de movimiento guardads en el programa. En base a esta constante y la substraccion para simular un ==, realizamos el movimiento necesario. En primera instancia, se realiza un movimiento hacia la derecha 
+/* sin antes pasar a revisar si tambien la columna esta bien, si no tiene errores de colisiones con bordes, etc. En segunda instancia, dependiendo del movimiento, difurcamos a metodos adaptadores para los diversos tipos
+/* de movimiento, pero siempre regresamos al metodo orgiinal para salir de este subsistema y regresar al metodo para mover a la figura.
+
+/* @param: IndexPointerToMovementArray: puntero hacia la memoria del arreglo de posiciones, usado para jalar el valor guardado
+/* @param: CONST_MOVIMIENTO_DERECHA: costante usada para representar el valor del movimiento hacia la derecha
+/* @param: PosicionHexadecimalEntidadActual: posicion en HEX en donde se encuentra la entidad en la pantalla, usada para transferir la informacion del programa a la pantalla
+/* @param: CoordeandaEntityColumnaActual: posicion en terminos de la columna del display de la entidad en analisis, util para revisar si existen colisiones con el borde de la pantalla 
 internalMovementRevisionLogic, HEX 000
 							   // En primera instancia procedemos a revisar derecha, al igual que los 
 							   // metodos anteriores, si la logica se ejecuta, saltamos hacia la direccion 
@@ -190,6 +233,16 @@ internalMovementRevisionLogic, HEX 000
 							   Load CONST_ONE
 							   JumpI internalMovementRevisionLogic
 
+/* Metodo que revisa si el movimiento hacia arriba está disponible para la entidad en análisis. Este método verifica si la posición hacia arriba 
+/* es válida, es decir, si no hay colisiones con bordes o paredes azules. Si el movimiento es posible, se actualizan las coordenadas de la entidad 
+/* y se procede a revisar posibles colisiones con los límites del mapa. En caso de que el movimiento no sea válido, se regresa al flujo principal 
+/* para continuar con la siguiente validación.
+/* El método utiliza constantes específicas para determinar el tipo de movimiento y ajustar las coordenadas de la entidad según su posición actual.
+/* @param: IndexPointerToMovementArray: puntero hacia la memoria del arreglo de movimientos, usado para obtener el valor del movimiento actual.
+/* @param: CONST_MOVIMIENTO_ARRIBA: constante usada para representar el valor del movimiento hacia arriba.
+/* @param: PosicionHexadecimalEntidadActual: posición en HEX donde se encuentra la entidad en la pantalla, usada para transferir la información del programa a la pantalla.
+/* @param: CoordenadaEntityFilaActual: posición en términos de la fila del display de la entidad en análisis, útil para ajustar la fila después de un movimiento.
+/* @param: CONST_SIXTEEN: constante numérica específica usada para manipular la posición en la pantalla del puntero, permitiendo calcular la nueva fila.
 internallyReviewIfTopIsFree, HEX 000
 							  // Revisamos el movimiento
 							  LoadI IndexPointerToMovementArray
@@ -211,7 +264,16 @@ internallyReviewIfTopIsFree, HEX 000
 							  JnS internallyReviewCollisionsWithBoundaries
 							  Load CONST_ONE
 							  JumpI internalMovementRevisionLogic
-							  
+
+/* Metodo que verifica si el movimiento hacia la izquierda esta disponible para la entidad en analisis. Este metodo comprueba 
+/* si la posicion a la izquierda es valida, es decir, si no hay colisiones con bordes o paredes azules. Si el movimiento 
+/* es posible, se actualizan las coordenadas de la entidad y se procede a revisar posibles colisiones con los limites del mapa. 
+/* Si el movimiento no es valido, el programa finaliza en el ultimo halt de este bloque de codigo. En cualquier otro caso, 
+/* el sistema regresa rapidamente al flujo principal en un modelo de salida temprana.
+/* @param: IndexPointerToMovementArray: puntero hacia la memoria del arreglo de movimientos, usado para obtener el valor guardado.
+/* @param: CONST_MOVIMIENTO_IZQUIERDA: constante usada para representar el valor del movimiento hacia la izquierda.
+/* @param: PosicionHexadecimalEntidadActual: posicion en HEX donde se encuentra la entidad en la pantalla, usada para transferir la informacion del programa a la pantalla.
+/* @param: CoordenadaEntityColumnaActual: posicion en terminos de la columna del display de la entidad en analisis, util para revisar si existen colisiones con el borde de la pantalla.							  
 internalllyReviewIfLeftIsFree, HEX 000
 							   // Revisamos el movimiento
 							   LoadI IndexPointerToMovementArray
@@ -233,6 +295,15 @@ internalllyReviewIfLeftIsFree, HEX 000
 							   Load CONST_ONE
 							   JumpI internalMovementRevisionLogic
 
+/* Metodo que verifica si el movimiento hacia abajo esta disponible para la entidad en analisis. Este metodo comprueba 
+/* si la posicion hacia abajo es valida, es decir, si no hay colisiones con bordes o paredes azules. Si el movimiento 
+/* es posible, se actualizan las coordenadas de la entidad y se procede a revisar posibles colisiones con los limites del mapa. 
+/* Si el movimiento no es valido, el programa regresa al loop principal de movimientos para continuar con la siguiente validacion.
+/* @param: IndexPointerToMovementArray: puntero hacia la memoria del arreglo de movimientos, usado para obtener el valor guardado.
+/* @param: CONST_MOVIMIENTO_ABAJO: constante usada para representar el valor del movimiento hacia abajo.
+/* @param: PosicionHexadecimalEntidadActual: posicion en HEX donde se encuentra la entidad en la pantalla, usada para transferir la informacion del programa a la pantalla.
+/* @param: CoordenadaEntityFilaActual: posicion en terminos de la fila del display de la entidad en analisis, util para ajustar la fila despues de un movimiento.
+/* @param: CONST_SIXTEEN: constante numerica especifica usada para manipular la posicion en la pantalla del puntero, permitiendo calcular la nueva fila.
 internallyReviewIfBottomIsFree, HEX 000
 								// Revisamos el moviomiento final
 								LoadI IndexPointerToMovementArray
@@ -253,8 +324,17 @@ internallyReviewIfBottomIsFree, HEX 000
 								JumpI internalMovementRevisionLogic
 							   
 
-/*Metodo que permite difurcar la revision de colisiones, la idea es tener una estructura similar al proceso anterior, difurcando en varias JnS calls
-/* para validar las colisiones del movimiento
+/* Metodo que permite revisar las colisiones con los bordes del mapa y las paredes azules. Este metodo verifica 
+/* si la entidad en movimiento ha alcanzado algun limite del display o si ha chocado con una pared azul. Si se 
+/* detecta una colision, el sistema ajusta la posicion de la entidad a su ubicacion anterior para evitar que se 
+/* mueva fuera de los limites validos. El metodo utiliza varias subrutinas para revisar cada borde y pared. Internamente, el sistema revisa si tenemos una colision con el borde del display,
+/* usando un modulo relativamente pequeno que determine si hemos superado las 15 posiciones del display, si esto sucede el programa nos revierte (-16),
+/* a la posicion de reaparacion de la figura en la misma fila pero en la posicion del otro lado del mapa.
+/* @param: CoordenadaEntityColumnaActual: posicion en terminos de la columna del display de la entidad en analisis, usada para revisar colisiones con bordes.
+/* @param: CoordenadaEntityFilaActual: posicion en terminos de la fila del display de la entidad en analisis, usada para revisar colisiones con bordes.
+/* @param: PosicionHexadecimalEntidadActual: posicion en HEX donde se encuentra la entidad en la pantalla, usada para transferir la informacion del programa a la pantalla.
+/* @param: CONST_DISPLAY_LIMIT: constante numerica que representa el limite del display (15 en decimal).
+/* @param: CONST_GRID_COLOR_BLUE: constante hexadecimal que representa el color azul de las paredes en el mapa.
 internallyReviewCollisionsWithBoundaries, HEX 000
 										  Load CoordenadaEntityColumnaActual
 										  Subt CONST_DISPLAY_LIMIT
@@ -266,6 +346,15 @@ internallyReviewCollisionsWithBoundaries, HEX 000
 										  Clear
 										  Store CoordenadaEntityColumnaActual
 										  Jump internalBlueBorderColisionDetection
+
+/* Metodo que sencarga de revisar si la posicion de la columna izquierda se ha sobrepasado el lado izuqierdo del display, la idea de este metodo 
+/* es que le permite al sistema detectar si tenemos un cambio en el cual, la posicion de la columna se haya posicionado fuera del display limits , osea en -1 dado
+/* que nbuestreos movimientos son de 1 a 1. En este caso, el sistema le reinicia a la posicion actual de la entidad al sumar 16 para regresar a donde tiene que ir (el final de su fila),
+/* y carga un 15 a la columna indicando su reinicio a la posicion final de display por la derecha.Luego, el programa continua con la revision de colisiones con paredes azules.
+/* @param: CoordenadaEntityColumnaActual: posicion en terminos de la columna del display de la entidad en analisis, usada para revisar si existen colisiones con el borde izquierdo.
+/* @param: PosicionHexadecimalEntidadActual: posicion en HEX donde se encuentra la entidad en la pantalla, usada para transferir la informacion del programa a la pantalla.
+/* @param: CONST_DISPLAY_LIMIT: constante numerica que representa el limite del display (15 en decimal).
+/* @param: CONST_SIXTEEN: constante numerica especifica usada para manipular la posicion en la pantalla del puntero, permitiendo calcular la nueva columna.
 RevisarCoordenadaColumnaIzquierda, Clear
 								   Load CoordenadaEntityColumnaActual
 								   SkipCond 000
@@ -277,6 +366,15 @@ RevisarCoordenadaColumnaIzquierda, Clear
 								   Store CoordenadaEntityColumnaActual
 									Jump internalBlueBorderColisionDetection
 								   
+/* Metodo que se encarga de revisar si la posicion de la fila inferior ha sobrepasado el limite del display. La idea de este metodo 
+/* es permitir al sistema detectar si la entidad se ha movido fuera del limite inferior del display, es decir, si la fila actual 
+/* excede el valor maximo permitido (15 en decimal). En este caso, el sistema ajusta la posicion actual de la entidad restando 256 
+/* para regresarla a la fila inicial (parte superior de su columna), y carga un cero a la fila indicando su reinicio al limite superior.
+/* Luego, el programa continua con la revision de colisiones con paredes azules.
+/* @param: CoordenadaEntityFilaActual: posicion en terminos de la fila del display de la entidad en analisis, usada para revisar si existen colisiones con el borde inferior.
+/* @param: PosicionHexadecimalEntidadActual: posicion en HEX donde se encuentra la entidad en la pantalla, usada para transferir la informacion del programa a la pantalla.
+/* @param: CONST_DISPLAY_LIMIT: constante numerica que representa el limite del display (15 en decimal).
+/* @param: CONST_TWO_FIFTY_SIX: constante numerica especifica usada para manipular la posicion en la pantalla del puntero, permitiendo calcular la nueva fila.
 RevisarCoordenadaFilaAbajo, Clear
 							Load CoordenadaEntityFilaActual
 							Subt CONST_DISPLAY_LIMIT
@@ -289,6 +387,15 @@ RevisarCoordenadaFilaAbajo, Clear
 							Store CoordenadaEntityFilaActual
 							Jump internalBlueBorderColisionDetection
 
+/* Metodo que se encarga de revisar si la posicion de la fila superior ha alcanzado el limite del display. La idea de este metodo 
+/* es permitir al sistema detectar si la entidad se ha movido fuera del limite superior del mapa, es decir, si la fila actual 
+/* tiene un valor menor que cero. En este caso, el sistema ajusta la posicion actual de la entidad sumando 256 para regresarla 
+/* a la parte inferior de su columna, y carga quince a la fila indicando su reinicio al limite inferior.
+/* Luego, el programa continua con la revision de colisiones con paredes azules.
+/* @param: CoordenadaEntityFilaActual: posicion en terminos de la fila del display de la entidad en analisis, usada para revisar si existen colisiones con el borde superior.
+/* @param: PosicionHexadecimalEntidadActual: posicion en HEX donde se encuentra la entidad en la pantalla, usada para transferir la informacion del programa a la pantalla.
+/* @param: CONST_DISPLAY_LIMIT: constante numerica que representa el limite del display (15 en decimal).
+/* @param: CONST_TWO_FIFTY_SIX: constante numerica especifica usada para manipular la posicion en la pantalla del puntero, permitiendo calcular la nueva fila.
 RevisarCoordenadaFilaArriba, Load CoordenadaEntityFilaActual
 						SkipCond 000
 						Jump internalBlueBorderColisionDetection
@@ -298,6 +405,17 @@ RevisarCoordenadaFilaArriba, Load CoordenadaEntityFilaActual
 						Load CONST_DISPLAY_LIMIT
 						Store CoordenadaEntityFilaActual
 						Jump internalBlueBorderColisionDetection
+
+
+/* Metodo que se encarga de revisar si existe una colision con una pared azul en el mapa. Este metodo verifica 
+/* si la posicion actual de la entidad coincide con el color azul definido para las paredes del juego. Si se detecta 
+/* una colision, el sistema ajusta la posicion de la entidad a su ubicacion anterior para evitar que se mueva hacia 
+/* una posicion no valida. Luego, el programa incrementa el puntero de movimientos y marca un indicador de repeticion 
+/* de movimiento para continuar con la siguiente validacion.
+/* @param: PosicionHexadecimalEntidadActual: posicion en HEX donde se encuentra la entidad en la pantalla, usada para transferir la informacion del programa a la pantalla.
+/* @param: CONST_GRID_COLOR_BLUE: constante hexadecimal usada para representar el color azul determinado para las paredes de la simulacion de Pac-man.
+/* @param: IndexPointerToMovementArray: variable que determina el puntero hacia el arreglo de movimientos, usado para avanzar al siguiente movimiento.
+/* @param: RepiteMovimiento: variable booleana que indica si es necesario repetir el movimiento actual debido a una colision.
 internalBlueBorderColisionDetection, Clear
 									 LoadI PosicionHexadecimalEntidadActual
 									 Subt CONST_GRID_COLOR_BLUE
@@ -321,6 +439,22 @@ internalBlueBorderColisionDetection, Clear
 									 
 
 
+/* Metodo que se encarga de mover una entidad dentro del juego, realizando validaciones previas para determinar 
+/* si la entidad es Pacman o un fantasma. Si la entidad es Pacman, el metodo realiza una transferecnia de la informacion interna para asegurar
+/* la integridad de los datos de movimiento, luego guarda en la posicion en donde estaba el color negro. Lo bueno de pacman es que siempre
+/* se tiene que mover. Luego reliza una serie de chequeos internos 
+/* para revisar si hay colisiones con monedas, powerups o fantasmas. Dependiendo del estado del juego, como si Pacman 
+/* tiene activado el poder de comer fantasmas, se ejecutan diferentes acciones. Si la entidad no es Pacman, el metodo 
+/* revisa si el movimiento colisiona con otras entidades o bordes del mapa. Finalmente, actualiza la posicion de la entidad 
+/* en el arreglo de posiciones y en el display. Internamente, el programa revisa y realiza llamadas de tipo JnS para guardar la informacion en 
+/* le caso de powerups, monedas o fantasmos. OJO: el orden del ActualizeIndexEntity y reviewIfFuturePositionIsAGhost es importante, 
+/* dado que eixste una manipulacion directa de los datos dentro de esta seccion.
+/* @param: isEntityPacman: variable booleana que indica si la entidad bajo analisis es Pacman.
+/* @param: PosicionHexadecimalEntidadActual: posicion en HEX donde se encuentra la entidad en la pantalla, usada para transferir la informacion del programa a la pantalla.
+/* @param: PosicionHexadecimalEntidadAnterior: posicion anterior en HEX de la entidad, usada para borrar su posicion previa en el display.
+/* @param: IndexPointerEntityArray: puntero hacia el arreglo de posiciones de las entidades, usado para actualizar la posicion de la entidad en el arreglo.
+/* @param: CanComerFantasmas: variable booleana que indica si Pacman tiene activado el poder de comer fantasmas.
+/* @param: ContadorMovimientosHechosConPowerUpComer: contador de movimientos realizados mientras Pacman tiene activado el poder de comer fantasmas.
 internallyMoveAnEntity, HEX 000
 						// Revisamos si la entidad es pacman, si la es realizxamos toda la logica internamente 
 						Load isEntityPacman
@@ -334,10 +468,6 @@ internallyMoveAnEntity, HEX 000
 						Load CONST_GRID_COLOR_NEGRO
 						StoreI PosicionHexadecimalEntidadAnterior
 
-						// Si estamos con el powerup entramos a revisar si interceptamos antes del movimiento un 
-						// fantasma en el camino de pacman que cause que todos se reinicie.
-						
-
 						// Antes de revisar si tenemos una moneda, revisamos si tenemos un powerup
 						Load PosicionHexadecimalEntityActAux
 						Subt CONST_GRID_COLOR_NARANJA
@@ -348,9 +478,9 @@ internallyMoveAnEntity, HEX 000
 						JnS reviewIfFuturePositionIsAGhost
 
 						Load CanComerFantasmas
-								Subt CONST_ONE
-								SkipCond 0C00
-								JnS decrementByOneCanComerTimer
+						Subt CONST_ONE
+						SkipCond 0C00
+						JnS decrementByOneCanComerTimer
 						// Si no tenemos un powerup, continuamos con el chequeo de una moneda 
 						Load PosicionHexadecimalEntityActAux
 						Subt CONST_GRID_COLOR_MONEDA
@@ -362,6 +492,16 @@ internallyMoveAnEntity, HEX 000
 
 							
 
+/* Metodo que se encarga de actualizar el total de puntos del juego cuando se encuentra un powerup y activa la 
+/* condicion para comer fantasmas. 
+/* Este metodo carga la constante que permite a Pacman comer fantasmas durante un tiempo limitado (32 default), inicializa un 
+/* temporizador con el numero 
+/* de movimientos permitidos para comer fantasmas y actualiza el puntaje del juego al sumar uno al total auxiliar de puntos.
+/* @param: CanComerFantasmas: variable booleana que indica si Pacman tiene activado el poder de comer fantasmas.
+/* @param: ContadorMovimientosHechosConPowerUpComer: contador de movimientos realizados mientras Pacman tiene activado el poder de comer fantasmas.
+/* @param: PuntosDeLaPartidaAux: variable auxiliar que almacena el puntaje parcial del juego.
+/* @param: CONST_ONE: constante numerica de valor uno usada para incrementar el puntaje.
+/* @param: CONST_MOVIMIENTOS_PERMITIDOS_PARA_COMER: numero maximo de movimientos permitidos para comer fantasmas.
 updateGameTotalWhenFoundAndSetUpEatOtherCondition, HEX 000
 													// Cargamos la constante que permite ir a comer a alguien mas dentro del sistema
 													Load CONST_ONE
@@ -376,6 +516,19 @@ updateGameTotalWhenFoundAndSetUpEatOtherCondition, HEX 000
 													
 													JumpI updateGameTotalWhenFoundAndSetUpEatOtherCondition
 
+/* Metodo que se encarga de revisar si la posicion futura de una entidad es un fantasma. Este metodo evalua 
+/* si la entidad en movimiento, al avanzar hacia su siguiente posicion, colisionara con algun fantasma presente 
+/* en el mapa. Dependiendo del tipo de fantasma detectado (turquesa, rojo, verde o rosado), el sistema realiza 
+/* diferentes acciones: si Pacman tiene activado el poder de comer fantasmas, el fantasma sera comido y regresara 
+/* a su posicion inicial; si no, Pacman perdera una vida y regresara a su posicion inicial. Dentro de este metodo especificamnte, se realiza
+/* la validacion del tipo de fantasma turequsa, dado que si estaqmos o no con el powerup debemos de hacer movimientoes diferentes, 
+/*- los que se difurcan con las funciones implementadas para la revision y redireccion en los diferentes eventos.
+/* @param: PosicionHexadecimalEntityActAux: variable auxiliar que almacena la posicion futura de la entidad en analisis.
+/* @param: CONST_GRID_COLOR_TURQUESA: constante hexadecimal que representa el color del fantasma turquesa.
+/* @param: CONST_GRID_COLOR_ROJO: constante hexadecimal que representa el color del fantasma rojo.
+/* @param: CONST_GRID_COLOR_VERDE: constante hexadecimal que representa el color del fantasma verde.
+/* @param: CONST_GRID_COLOR_ROSADO: constante hexadecimal que representa el color del fantasma rosado.
+/* @param: CanComerFantasmas: variable booleana que indica si Pacman tiene activado el poder de comer fantasmas.
 reviewIfFuturePositionIsAGhost, HEX 000
 								// 1. Cargamos la posicion actual, es decir la posicion a la que tiene que moverse antes de imprimir.
 								// y comparamos con un fantasma, si no lo es saltamos
@@ -392,13 +545,13 @@ reviewIfFuturePositionIsAGhost, HEX 000
 								JnS reviewIfFuturePositionIsAGhostCanComerAdapter
 								JnS beEatenByGhostAndReturnToStart
 
-								// 2. Cargamos la posicion de pacman nueva y la ponemos
+								// 3. Cargamos la posicion de pacman nueva y la ponemos
 								Load CONST_GRID_COLOR_YELLOW
 								StoreI PosicionHexadecimalEntityActAux
 								Load CONST_GRID_COLOR_NEGRO
 								StoreI PosicionHexadecimalEntidadActual
 
-								// 3. Cargamos la posicion de pacman nueva en el arreglo de posiciones
+								// 4. Cargamos la posicion de pacman nueva en el arreglo de posiciones
 							    Load PosicionHexadecimalEntityActAux
 								StoreI IndexEntityArrayInicio
 								Load IndexPointerEntityArray
@@ -406,7 +559,7 @@ reviewIfFuturePositionIsAGhost, HEX 000
 								Store IndexPointerEntityArray
 
 		
-								// Regresamos al hilo principal
+								// 5. Regresamos al hilo principal
 								JumpI internallyMoveAnEntity
 
 reviewIfFuturePositionIsAGhostCanComerAdapter, HEX 000
@@ -414,6 +567,14 @@ reviewIfFuturePositionIsAGhostCanComerAdapter, HEX 000
 											   JumpI internallyMoveAnEntity
 	
 
+/* Metodo que revisa si la posicion futura de una entidad es un fantasma rojo. Este metodo evalua 
+/* si la entidad en movimiento, al avanzar hacia su siguiente posicion, colisionara con un fantasma rojo presente 
+/* en el mapa. Si se detecta un fantasma rojo, el sistema verifica si Pacman tiene activado el poder de comer fantasmas 
+/* (`CanComerFantasmas`). Si el poder esta activado, el fantasma rojo sera comido y regresara a su posicion inicial; 
+/* si no, Pacman perdera una vida y regresara a su posicion inicial.
+/* @param: PosicionHexadecimalEntityActAux: variable auxiliar que almacena la posicion futura de la entidad en analisis.
+/* @param: CONST_GRID_COLOR_ROJO: constante hexadecimal usada para representar el color del fantasma rojo.
+/* @param: CanComerFantasmas: variable booleana que indica si Pacman tiene activado el poder de comer fantasmas.
 reviewIfFuturePositionIsARedGhost, Clear
 									// 1. Cargamos la posicion actual, y revisamos si este es un fantasma rojo.
 									Load PosicionHexadecimalEntityActAux
@@ -428,20 +589,17 @@ reviewIfFuturePositionIsARedGhost, Clear
 									JnS reviewIfFuturePositionIsARedGhostCanComerAdapter
 									JnS beEatenByGhostAndReturnToStart
 
-									// 2. Cargamos la posicion de pacman nueva y la ponemos
-									  Load CONST_GRID_COLOR_YELLOW
-									  StoreI PosicionHexadecimalEntityActAux
-									  Load CONST_GRID_COLOR_NEGRO
-									  StoreI PosicionHexadecimalEntidadActual
+									// 3. Cargamos la posicion de pacman nueva y la ponemos
+									Load CONST_GRID_COLOR_YELLOW
+									StoreI PosicionHexadecimalEntityActAux
+									Load CONST_GRID_COLOR_NEGRO
+									StoreI PosicionHexadecimalEntidadActual
 
-									   // 3. Cargamos la posicion de pacman nueva en el arreglo de posiciones
-									
-
-									   Load PosicionHexadecimalEntityActAux
-									   StoreI IndexEntityArrayInicio
-
-							
-									   
+									// 4. Cargamos la posicion de pacman nueva en el arreglo de posiciones
+								
+									Load PosicionHexadecimalEntityActAux
+									StoreI IndexEntityArrayInicio
+ 
 									// Regresamos al hilo principal
 									JumpI reviewIfFuturePositionIsAGhost
 
@@ -449,37 +607,55 @@ reviewIfFuturePositionIsARedGhostCanComerAdapter, HEX 000
 												  JnS eatRedGhostAndReturnToCorrectPosition
 												  JumpI reviewIfFuturePositionIsAGhost
 
-reviewIfFuturePositionIsAGreenGhost, Clear
-									 // 1. Cargamos la posicion actual y revisamos si este es un fantasma verde
-									 Load PosicionHexadecimalEntityActAux
-									 Subt CONST_GRID_COLOR_VERDE
-									 SkipCond 400
-									 Jump reviewIfFuturePositionIsAPinkGhost
-
-									 // 2. Si seguimos aqui significa que tenemo un fantasma turquesa en frente, ahora tenemos que difurcar para pacman si se regresa o le come
-									 Load CanComerFantasmas
-									 Subt CONST_ONE
-									 SkipCond 0C00
-									 JnS reviewIfFuturePositionIsAGreenGhostCanComerAdapter
-									 JnS beEatenByGhostAndReturnToStart
-
-// 3. Cargamos la posicion de pacman nueva y la ponemos
-									  Load CONST_GRID_COLOR_YELLOW
-									  StoreI PosicionHexadecimalEntityActAux
-									  Load CONST_GRID_COLOR_NEGRO
-									  StoreI PosicionHexadecimalEntidadActual
-
-									   // 4. Cargamos la posicion de pacman nueva en el arreglo de posiciones
-									 
-									   Load PosicionHexadecimalEntityActAux
-									   StoreI IndexEntityArrayInicio
-
-									 // Regresamos al hilo principal
-									JumpI reviewIfFuturePositionIsAGhost
+/* Metodo que revisa si la posicion futura de una entidad es un fantasma verde. Este metodo evalua 
+/* si la entidad en movimiento, al avanzar hacia su siguiente posicion, colisionara con un fantasma verde presente 
+/* en el mapa. Si se detecta un fantasma verde, el sistema verifica si Pacman tiene activado el poder de comer fantasmas 
+/* (`CanComerFantasmas`). Si el poder esta activado, el fantasma verde sera comido y regresara a su posicion inicial; 
+/* si no, Pacman perdera una vida y regresara a su posicion inicial.
+/* @param: PosicionHexadecimalEntityActAux: variable auxiliar que almacena la posicion futura de la entidad en analisis.
+/* @param: CONST_GRID_COLOR_VERDE: constante hexadecimal usada para representar el color del fantasma verde.
+/* @param: CanComerFantasmas: variable booleana que indica si Pacman tiene activado el poder de comer fantasmas.
+reviewIfFuturePositionIsAGreenGhost, 	 Clear
+										 // 1. Cargamos la posicion actual y revisamos si este es un fantasma verde
+										 Load PosicionHexadecimalEntityActAux
+										 Subt CONST_GRID_COLOR_VERDE
+										 SkipCond 400
+										 Jump reviewIfFuturePositionIsAPinkGhost
+	
+										 // 2. Si seguimos aqui significa que tenemo un fantasma turquesa en frente, ahora tenemos que difurcar para pacman si se regresa o le come
+										 Load CanComerFantasmas
+										 Subt CONST_ONE
+										 SkipCond 0C00
+										 JnS reviewIfFuturePositionIsAGreenGhostCanComerAdapter
+										 JnS beEatenByGhostAndReturnToStart
+	
+										 // 3. Cargamos la posicion de pacman nueva y la ponemos
+										 Load CONST_GRID_COLOR_YELLOW
+										 StoreI PosicionHexadecimalEntityActAux
+										 Load CONST_GRID_COLOR_NEGRO
+										 StoreI PosicionHexadecimalEntidadActual
+	
+										 // 4. Cargamos la posicion de pacman nueva en el arreglo de posiciones
+										 
+										 Load PosicionHexadecimalEntityActAux
+										 StoreI IndexEntityArrayInicio
+	
+										 // Regresamos al hilo principal
+										 JumpI reviewIfFuturePositionIsAGhost
 									
 reviewIfFuturePositionIsAGreenGhostCanComerAdapter, HEX 000
 													JnS eatGreenGhostAndReturnToCorrectPosition
 													JumpI reviewIfFuturePositionIsAGhost
+
+													
+/* Metodo que revisa si la posicion futura de una entidad es un fantasma rosado. Este metodo evalua 
+/* si la entidad en movimiento, al avanzar hacia su siguiente posicion, colisionara con un fantasma rosado presente 
+/* en el mapa. Si se detecta un fantasma rosado, el sistema verifica si Pacman tiene activado el poder de comer fantasmas 
+/* (`CanComerFantasmas`). Si el poder esta activado, el fantasma rosado sera comido y regresara a su posicion inicial; 
+/* si no, Pacman perdera una vida y regresara a su posicion inicial.
+/* @param: PosicionHexadecimalEntityActAux: variable auxiliar que almacena la posicion futura de la entidad en analisis.
+/* @param: CONST_GRID_COLOR_ROSADO: constante hexadecimal usada para representar el color del fantasma rosado.
+/* @param: CanComerFantasmas: variable booleana que indica si Pacman tiene activado el poder de comer fantasmas.
 reviewIfFuturePositionIsAPinkGhost, Clear
 									// 1. Cargamos la posicion actual y evisamos si este es un fantasma rosado
 									Load PosicionHexadecimalEntityActAux
@@ -494,18 +670,15 @@ reviewIfFuturePositionIsAPinkGhost, Clear
 									JnS reviewIfFuturePositionIsAPinkGhostCanComerAdapter
 									JnS beEatenByGhostAndReturnToStart
 
-// 2. Cargamos la posicion de pacman nueva y la ponemos
-									  Load CONST_GRID_COLOR_YELLOW
-									  StoreI PosicionHexadecimalEntityActAux
-									  Load CONST_GRID_COLOR_NEGRO
-									  StoreI PosicionHexadecimalEntidadActual
+									// 3. Cargamos la posicion de pacman nueva y la ponemos
+									Load CONST_GRID_COLOR_YELLOW
+									StoreI PosicionHexadecimalEntityActAux
+									Load CONST_GRID_COLOR_NEGRO
+									StoreI PosicionHexadecimalEntidadActual
 
-									   // 3. Cargamos la posicion de pacman nueva en el arreglo de posiciones
-								
-
-
-									   Load PosicionHexadecimalEntityActAux
-									   StoreI IndexEntityArrayInicio
+									// 4. Cargamos la posicion de pacman nueva en el arreglo de posiciones
+								    Load PosicionHexadecimalEntityActAux
+									StoreI IndexEntityArrayInicio
 
 									 
 									// Regresamos al hilo principal
@@ -514,6 +687,14 @@ reviewIfFuturePositionIsAPinkGhost, Clear
 reviewIfFuturePositionIsAPinkGhostCanComerAdapter, HEX 000
 													JnS eatPinkGhostAndReturnToCorrectPosition
 													JumpI reviewIfFuturePositionIsAGhost
+
+/* Metodo que se encarga de manejar el proceso de comer al fantasma turquesa y regresar al flujo principal del juego. 
+/* Este metodo se ejecuta cuando Pacman tiene activado el poder de comer fantasmas y colisiona con un fantasma turquesa. 
+/* Primero, mueve al fantasma turquesa a su posicion inicial llamando al metodo `reviewCyanGhostRestartPositionAndMove`. 
+/* Luego, actualiza el puntaje del juego sumando diez puntos al total y lo muestra en pantalla. Finalmente, regresa al 
+/* flujo principal para continuar con la logica del juego.
+/* @param: PuntosDeLaPartida: variable que almacena el puntaje total del juego.
+/* @param: CONST_TEN_IN_DEC: constante numerica que representa el valor de diez puntos a sumar al puntaje.
 eatCyanGhostAndReturnToCorrectPosition, HEX 000
 										// En este metodo, si entramos significa  que caimos no solo en tener un fantasma turquesa enfrente,
 										// sino que tambien tenemos autorizado en el game loop comer a ese fantasma
@@ -521,7 +702,6 @@ eatCyanGhostAndReturnToCorrectPosition, HEX 000
 										// 1. Tenemos que mover a nuestro fantasma a su posicion inicial
 										JnS reviewCyanGhostRestartPositionAndMove
 										
-
 										// 2. Cargamos los puntos dado que si pudimos comer
 										Load PuntosDeLaPartida
 										Add CONST_TEN_IN_DEC
@@ -531,6 +711,14 @@ eatCyanGhostAndReturnToCorrectPosition, HEX 000
 										// 3. Regresamos al main loop
 										JumpI reviewIfFuturePositionIsAGhost
 
+/* Metodo que revisa y determina la nueva posicion del fantasma turquesa despues de ser comido por Pacman. 
+/* Este metodo carga la posicion original del fantasma turquesa y verifica si puede moverse a esa posicion o a 
+/* cualquiera de sus laterales (derecha, arriba, izquierda, abajo). Si encuentra una posicion valida, llama al 
+/* metodo `RegisterCyanGhostPositionInEntityArrayAndMove` para actualizar la posicion del fantasma en el arreglo 
+/* de entidades y en el mapa. Si no se encuentra una posicion valida, el metodo termina sin realizar cambios.
+/* @param: CONST_ORIGINAL_FANTASMA_TURQUESA_LOCATION: constante que representa la posicion inicial del fantasma turquesa.
+/* @param: PosicionHexadecimalGhostMovidoAux: variable auxiliar usada para almacenar temporalmente la posicion del fantasma.
+/* @param: CONST_GRID_COLOR_NEGRO: constante hexadecimal que representa el color negro, usado para verificar posiciones vacias.
 reviewCyanGhostRestartPositionAndMove, HEX 000
 									   // 1. Cargamos en una variable auxiliar la posicion original del fantasma turquesa 
 									   Load CONST_ORIGINAL_FANTASMA_TURQUESA_LOCATION
@@ -590,6 +778,14 @@ reviewCyanGhostRestartPositionAndMove, HEX 000
 									   JumpI reviewCyanGhostRestartPositionAndMove
 									   
 										
+/* Metodo que actualiza la posicion del fantasma turquesa en el arreglo de entidades y en el mapa despues de ser comido. 
+/* Este metodo guarda la nueva posicion del fantasma en el arreglo general de posiciones, asegurandose de no desfasar 
+/* el indice del arreglo principal. Luego, pinta al fantasma turquesa en la nueva posicion dentro del mapa usando su 
+/* color correspondiente. Finalmente, regresa al flujo principal para continuar con la logica del juego.
+/* @param: IndexPointerEntityArray: puntero hacia el arreglo de posiciones de las entidades.
+/* @param: IndexEntityArrayInicio: posicion inicial del arreglo de entidades.
+/* @param: PosicionHexadecimalGhostMovidoAux: variable auxiliar que almacena la nueva posicion del fantasma.
+/* @param: CONST_GRID_COLOR_TURQUESA: constante hexadecimal que representa el color del fantasma turquesa.
 RegisterCyanGhostPositionInEntityArrayAndMove, HEX 000
 									  // 1. Aqui vamos a mover la figura, y guardar la posicion a donde fue en el arreglo general de posiciones
 
@@ -615,7 +811,14 @@ RegisterCyanGhostPositionInEntityArrayAndMove, HEX 000
 									  JumpI reviewCyanGhostRestartPositionAndMove
 
 
-eatRedGhostAndReturnToCorrectPosition,  HEX 000
+/* Metodo que maneja el proceso de comer al fantasma rojo y regresar al flujo principal del juego. 
+/* Este metodo se ejecuta cuando Pacman tiene activado el poder de comer fantasmas y colisiona con un fantasma rojo. 
+/* Primero, mueve al fantasma rojo a su posicion inicial llamando al metodo `reviewRedGhostRestartPositionAndMove`. 
+/* Luego, actualiza el puntaje del juego sumando diez puntos al total y lo muestra en pantalla. Finalmente, regresa al 
+/* flujo principal para continuar con la logica del juego.
+/* @param: PuntosDeLaPartida: variable que almacena el puntaje total del juego.
+/* @param: CONST_TEN_IN_DEC: constante numerica que representa el valor de diez puntos a sumar al puntaje.
+eatRedGhostAndReturnToCorrectPosition, HEX 000
 										// En este metodo, si entramos significa  que caimos no solo en tener un fantasma turquesa enfrente,
 										// sino que tambien tenemos autorizado en el game loop comer a ese fantasma
 
@@ -632,6 +835,14 @@ eatRedGhostAndReturnToCorrectPosition,  HEX 000
 										// 3. Regresamos al main loop
 										JumpI eatRedGhostAndReturnToCorrectPosition
 
+/* Metodo que revisa y determina la nueva posicion del fantasma rojo despues de ser comido por Pacman. 
+/* Este metodo carga la posicion original del fantasma rojo y verifica si puede moverse a esa posicion o a 
+/* cualquiera de sus laterales (derecha, arriba, izquierda, abajo). Si encuentra una posicion valida, llama al 
+/* metodo `RegisterRedGhostPositionInEntityArrayAndMove` para actualizar la posicion del fantasma en el arreglo 
+/* de entidades y en el mapa. Si no se encuentra una posicion valida, el metodo termina sin realizar cambios.
+/* @param: CONST_ORIGINAL_FANTASMA_ROJO_LOCATION: constante que representa la posicion inicial del fantasma rojo.
+/* @param: PosicionHexadecimalGhostMovidoAux: variable auxiliar usada para almacenar temporalmente la posicion del fantasma.
+/* @param: CONST_GRID_COLOR_NEGRO: constante hexadecimal que representa el color negro, usado para verificar posiciones vacias.
 reviewRedGhostRestartPositionAndMove, HEX 000
 									  // Al igual que en el metodo para el fastama turquesa, tenemos que pasar por una revision inicial de la posicion posible para
 									  // el movimiento y luego moverla y guardarla
@@ -692,6 +903,14 @@ reviewRedGhostRestartPositionAndMove, HEX 000
 									   // 3. Salimos si no pudimos realizar el movimiento 
 									   JumpI reviewRedGhostRestartPositionAndMove
 
+/* Metodo que actualiza la posicion del fantasma rojo en el arreglo de entidades y en el mapa despues de ser comido. 
+/* Este metodo guarda la nueva posicion del fantasma en el arreglo general de posiciones, asegurandose de no desfasar 
+/* el indice del arreglo principal. Luego, pinta al fantasma rojo en la nueva posicion dentro del mapa usando su 
+/* color correspondiente. Finalmente, regresa al flujo principal para continuar con la logica del juego.
+/* @param: IndexPointerEntityArray: puntero hacia el arreglo de posiciones de las entidades.
+/* @param: IndexEntityArrayInicio: posicion inicial del arreglo de entidades.
+/* @param: PosicionHexadecimalGhostMovidoAux: variable auxiliar que almacena la nueva posicion del fantasma.
+/* @param: CONST_GRID_COLOR_ROJO: constante hexadecimal que representa el color del fantasma rojo.
 RegisterRedGhostPositionInEntityArrayAndMove, HEX 000
 									 // 1.1 Cargamos la variable de posicion de arreglo, sumamos uno para entrar al rojo y guardamos el Aux
 									  Load IndexPointerEntityArray
@@ -715,7 +934,14 @@ RegisterRedGhostPositionInEntityArrayAndMove, HEX 000
 									  JumpI reviewRedGhostRestartPositionAndMove
 
 
-eatGreenGhostAndReturnToCorrectPosition,  HEX 000
+/* Metodo que maneja el proceso de comer al fantasma verde y regresar al flujo principal del juego. 
+/* Este metodo se ejecuta cuando Pacman tiene activado el poder de comer fantasmas y colisiona con un fantasma verde. 
+/* Primero, mueve al fantasma verde a su posicion inicial llamando al metodo `reviewGreenGhostRestartPositionAndMove`. 
+/* Luego, actualiza el puntaje del juego sumando diez puntos al total y lo muestra en pantalla. Finalmente, regresa al 
+/* flujo principal para continuar con la logica del juego.
+/* @param: PuntosDeLaPartida: variable que almacena el puntaje total del juego.
+/* @param: CONST_TEN_IN_DEC: constante numerica que representa el valor de diez puntos a sumar al puntaje.
+eatGreenGhostAndReturnToCorrectPosition, HEX 000
 										// En este metodo, si entramos significa  que caimos no solo en tener un fantasma turquesa enfrente,
 										// sino que tambien tenemos autorizado en el game loop comer a ese fantasma
 
@@ -732,6 +958,14 @@ eatGreenGhostAndReturnToCorrectPosition,  HEX 000
 										// 3. Regresamos al main loop
 										JumpI eatGreenGhostAndReturnToCorrectPosition
 
+/* Metodo que revisa y determina la nueva posicion del fantasma verde despues de ser comido por Pacman. 
+/* Este metodo carga la posicion original del fantasma verde y verifica si puede moverse a esa posicion o a 
+/* cualquiera de sus laterales (derecha, arriba, izquierda, abajo). Si encuentra una posicion valida, llama al 
+/* metodo `RegisterGreenGhostPositionInEntityArrayAndMove` para actualizar la posicion del fantasma en el arreglo 
+/* de entidades y en el mapa. Si no se encuentra una posicion valida, el metodo termina sin realizar cambios.
+/* @param: CONST_ORIGINAL_FANTASMA_VERDE_LOCATION: constante que representa la posicion inicial del fantasma verde.
+/* @param: PosicionHexadecimalGhostMovidoAux: variable auxiliar usada para almacenar temporalmente la posicion del fantasma.
+/* @param: CONST_GRID_COLOR_NEGRO: constante hexadecimal que representa el color negro, usado para verificar posiciones vacias.
 reviewGreenGhostRestartPositionAndMove, HEX 000
 										 // Al igual que en el metodo para el fastama turquesa, tenemos que pasar por una revision inicial de la posicion posible para
 									  // el movimiento y luego moverla y guardarla
@@ -792,6 +1026,14 @@ reviewGreenGhostRestartPositionAndMove, HEX 000
 									   // 3. Salimos si no pudimos realizar el movimiento 
 									   JumpI reviewGreenGhostRestartPositionAndMove
 
+/* Metodo que actualiza la posicion del fantasma verde en el arreglo de entidades y en el mapa despues de ser comido. 
+/* Este metodo guarda la nueva posicion del fantasma en el arreglo general de posiciones, asegurandose de no desfasar 
+/* el indice del arreglo principal. Luego, pinta al fantasma verde en la nueva posicion dentro del mapa usando su 
+/* color correspondiente. Finalmente, regresa al flujo principal para continuar con la logica del juego.
+/* @param: IndexPointerEntityArray: puntero hacia el arreglo de posiciones de las entidades.
+/* @param: IndexEntityArrayInicio: posicion inicial del arreglo de entidades.
+/* @param: PosicionHexadecimalGhostMovidoAux: variable auxiliar que almacena la nueva posicion del fantasma.
+/* @param: CONST_GRID_COLOR_VERDE: constante hexadecimal que representa el color del fantasma verde.
 RegisterGreenGhostPositionInEntityArrayAndMove, HEX 000
 									   // 1.1 Cargamos la variable de posicion de arreglo, sumamos uno para entrar al rojo y guardamos el Aux
 									   Load IndexPointerEntityArray
@@ -815,6 +1057,13 @@ RegisterGreenGhostPositionInEntityArrayAndMove, HEX 000
 									  JumpI reviewGreenGhostRestartPositionAndMove
 
 
+/* Metodo que maneja el proceso de comer al fantasma rosado y regresar al flujo principal del juego. 
+/* Este metodo se ejecuta cuando Pacman tiene activado el poder de comer fantasmas y colisiona con un fantasma rosado. 
+/* Primero, mueve al fantasma rosado a su posicion inicial llamando al metodo `reviewPinkGhostRestartPositionAndMove`. 
+/* Luego, actualiza el puntaje del juego sumando diez puntos al total y lo muestra en pantalla. Finalmente, regresa al 
+/* flujo principal para continuar con la logica del juego.
+/* @param: PuntosDeLaPartida: variable que almacena el puntaje total del juego.
+/* @param: CONST_TEN_IN_DEC: constante numerica que representa el valor de diez puntos a sumar al puntaje.
 eatPinkGhostAndReturnToCorrectPosition, HEX 000
 									  // Al igual que para todos los fantasmas anteriores, debemos de tener en cuenta a donde nos podemos mover
 									  // 1. Tenemos que mover a nuestro fantasma a su posicion inicial
@@ -830,6 +1079,14 @@ eatPinkGhostAndReturnToCorrectPosition, HEX 000
 										// 3. Regresamos al main loop
 										JumpI eatPinkGhostAndReturnToCorrectPosition
 
+/* Metodo que revisa y determina la nueva posicion del fantasma rosado despues de ser comido por Pacman. 
+/* Este metodo carga la posicion original del fantasma rosado y verifica si puede moverse a esa posicion o a 
+/* cualquiera de sus laterales (derecha, arriba, izquierda, abajo). Si encuentra una posicion valida, llama al 
+/* metodo `RegisterPinkGhostPositionInEntityArrayAndMove` para actualizar la posicion del fantasma en el arreglo 
+/* de entidades y en el mapa. Si no se encuentra una posicion valida, el metodo termina sin realizar cambios.
+/* @param: CONST_ORIGINAL_FANTASMA_ROSADO_LOCATION: constante que representa la posicion inicial del fantasma rosado.
+/* @param: PosicionHexadecimalGhostMovidoAux: variable auxiliar usada para almacenar temporalmente la posicion del fantasma.
+/* @param: CONST_GRID_COLOR_NEGRO: constante hexadecimal que representa el color negro, usado para verificar posiciones vacias.
 reviewPinkGhostRestartPositionAndMove, HEX 000
 										 // Al igual que en el metodo para el fastama turquesa, tenemos que pasar por una revision inicial de la posicion posible para
 									  // el movimiento y luego moverla y guardarla
@@ -890,6 +1147,14 @@ reviewPinkGhostRestartPositionAndMove, HEX 000
 									   // 3. Salimos si no pudimos realizar el movimiento 
 									   JumpI reviewPinkGhostRestartPositionAndMove
 
+/* Metodo que actualiza la posicion del fantasma rosado en el arreglo de entidades y en el mapa despues de ser comido. 
+/* Este metodo guarda la nueva posicion del fantasma en el arreglo general de posiciones, asegurandose de no desfasar 
+/* el indice del arreglo principal. Luego, pinta al fantasma rosado en la nueva posicion dentro del mapa usando su 
+/* color correspondiente. Finalmente, regresa al flujo principal para continuar con la logica del juego.
+/* @param: IndexPointerEntityArray: puntero hacia el arreglo de posiciones de las entidades.
+/* @param: IndexEntityArrayInicio: posicion inicial del arreglo de entidades.
+/* @param: PosicionHexadecimalGhostMovidoAux: variable auxiliar que almacena la nueva posicion del fantasma.
+/* @param: CONST_GRID_COLOR_ROSADO: constante hexadecimal que representa el color del fantasma rosado.
 RegisterPinkGhostPositionInEntityArrayAndMove, HEX 000
 									    // 1.1 Cargamos la variable de posicion de arreglo, sumamos uno para entrar al rosado y guardamos el Aux
 									   Load IndexPointerEntityArray
@@ -913,6 +1178,16 @@ RegisterPinkGhostPositionInEntityArrayAndMove, HEX 000
 									  JumpI reviewPinkGhostRestartPositionAndMove
 
 
+/* Metodo que maneja el proceso de que Pacman sea comido por un fantasma y regrese a su posicion inicial. 
+/* Este metodo se ejecuta cuando Pacman colisiona con un fantasma sin tener activado el poder de comer fantasmas. 
+/* Primero, decrementa el contador de vidas de Pacman en uno. Luego, intenta mover a Pacman a su posicion original 
+/* especificada en `CONST_ORIGINAL_PACMAN_LOCATION`. Si la posicion original esta ocupada, el sistema revisa las 
+/* posiciones adyacentes (derecha, arriba, izquierda, abajo) hasta encontrar una posicion libre (representada por 
+/* el color negro, `CONST_GRID_COLOR_NEGRO`). Si no encuentra ninguna posicion libre, el programa termina abruptamente.
+/* @param: ContadorDeVidas: variable que almacena el numero de vidas restantes de Pacman.
+/* @param: CONST_ORIGINAL_PACMAN_LOCATION: constante que representa la posicion inicial de Pacman en el mapa.
+/* @param: PosicionHexadecimalEntityActAux: variable auxiliar usada para almacenar temporalmente la posicion de Pacman.
+/* @param: CONST_GRID_COLOR_NEGRO: constante hexadecimal que representa el color negro, usado para verificar posiciones vacias.
 beEatenByGhostAndReturnToStart, HEX 000
 								// En este caso, regresamos a pacman a la posicion inicial, esto claro esta dependiendo de la posicion a la que tiene  que ir y sy
 								// hay algo ahi
@@ -981,6 +1256,19 @@ beEatenByGhostAndReturnToStart, HEX 000
 
 
 
+/* Metodo que revisa si la entidad en analisis es un fantasma turquesa y realiza las acciones correspondientes. 
+/* Este metodo se ejecuta cuando se detecta que la entidad actual es un fantasma turquesa. Primero, verifica si 
+/* la posicion futura del fantasma coincide con la posicion de Pacman. Si Pacman tiene activado el poder de comer 
+/* fantasmas, el sistema procede a comer al fantasma turquesa llamando al metodo `reDirectToEatCyanGhostAndReturnToCorrectPosition`. 
+/* Si no tiene el poder activado, el sistema llama al metodo `beEatenByGhostAndReturnToStart`, lo que resta una vida 
+/* a Pacman y lo regresa a su posicion inicial. Finalmente, actualiza el color del fantasma turquesa en el mapa y 
+/* regresa al flujo principal para continuar con la logica del juego.
+/* @param: isEntityTurquesa: variable booleana que indica si la entidad actual es un fantasma turquesa.
+/* @param: PosicionHexadecimalEntidadActual: posicion actual de la entidad en el mapa.
+/* @param: CONST_GRID_COLOR_YELLOW: constante hexadecimal que representa el color amarillo de Pacman.
+/* @param: ColorTemp: variable auxiliar usada para almacenar temporalmente el color de la posicion actual.
+/* @param: IndexColorAnterior: puntero hacia el color anterior de la entidad.
+/* @param: CONST_GRID_COLOR_TURQUESA: constante hexadecimal que representa el color del fantasma turquesa.
 reviewAndPaintIfEntityisCyanGhost, Clear
 									Load isEntityTurquesa
 									Subt CONST_ONE	
@@ -1012,6 +1300,19 @@ reviewAndPaintIfEntityisCyanGhost, Clear
 									
 									Jump IndexMovimientoMasUnoYReconstruccionDeArreglo
 
+/* Metodo que revisa si el fantasma turquesa debe ser comido por Pacman o si debe comer a Pacman. 
+/* Este metodo se ejecuta cuando se detecta que la posicion futura del fantasma turquesa coincide con 
+/* la posicion de Pacman. Si Pacman tiene activado el poder de comer fantasmas, el sistema procede a 
+/* comer al fantasma turquesa llamando al metodo `reDirectToEatCyanGhostAndReturnToCorrectPosition`. 
+/* Si no tiene el poder activado, el sistema llama al metodo `beEatenByGhostAndReturnToStart`, lo que 
+/* resta una vida a Pacman y lo regresa a su posicion inicial. Ademas, actualiza las posiciones de Pacman 
+/* y el fantasma turquesa en el arreglo de entidades y en el mapa.
+/* @param: CanComerFantasmas: variable booleana que indica si Pacman tiene activado el poder de comer fantasmas.
+/* @param: PosicionHexadecimalEntityActAux: variable auxiliar que almacena la posicion futura de la entidad.
+/* @param: CONST_GRID_COLOR_YELLOW: constante hexadecimal que representa el color amarillo de Pacman.
+/* @param: CONST_GRID_COLOR_NEGRO: constante hexadecimal que representa el color negro.
+/* @param: IndexPointerEntityArray: puntero hacia el arreglo de posiciones de las entidades.
+/* @param: IndexEntityArrayInicio: posicion inicial del arreglo de entidades.
 reviewCyanGhostIfEatenByOrEatsPacman, HEX 000
 									  // 1. Cargamos el valor de la constante para ver si tenemos que pasar al metodo de comer 
 									  Load CanComerFantasmas
@@ -1026,16 +1327,15 @@ reviewCyanGhostIfEatenByOrEatsPacman, HEX 000
 									  Load CONST_GRID_COLOR_NEGRO
 									  StoreI PosicionHexadecimalEntidadActual
 
-									   // 3. Cargamos la posicion de pacman nueva en el arreglo de posiciones
-									   Load IndexPointerEntityArray
-									   Store extractedPosition
+									  // 3. Cargamos la posicion de pacman nueva en el arreglo de posiciones
+									  Load IndexPointerEntityArray
+									  Store extractedPosition
 
+								      Load PosicionHexadecimalEntityActAux
+									  StoreI IndexEntityArrayInicio
 
-									   Load PosicionHexadecimalEntityActAux
-									   StoreI IndexEntityArrayInicio
-
-									   Load extractedPosition
-									   Store IndexPointerEntityArray
+									  Load extractedPosition
+									  Store IndexPointerEntityArray
 									   
 									  Load CONST_GRID_COLOR_NEGRO
 									  StoreI PosicionHexadecimalEntidadAnterior
@@ -1043,10 +1343,29 @@ reviewCyanGhostIfEatenByOrEatsPacman, HEX 000
 									  // 2. Regresamos normalemtne 
 									  Jump IndexMovimientoMasUnoYReconstruccionDeArreglo
 
+/* Metodo adaptador que redirige la logica para comer al fantasma turquesa y regresar a su posicion inicial. 
+/* Este metodo se ejecuta cuando Pacman tiene activado el poder de comer fantasmas y colisiona con un fantasma turquesa. 
+/* Llama al metodo `eatCyanGhostAndReturnToCorrectPosition` para manejar el proceso de comer al fantasma turquesa, 
+/* actualizar el puntaje y regresar al flujo principal del juego.
+/* @param: eatCyanGhostAndReturnToCorrectPosition: metodo que maneja el proceso de comer al fantasma turquesa.
 reDirectToEatCyanGhostAndReturnToCorrectPosition, HEX 000
 												  JnS eatCyanGhostAndReturnToCorrectPosition
 												  Jump IndexMovimientoMasUnoYReconstruccionDeArreglo
-reviewAndPaintIfEntitiyisRedGhost,  Clear
+
+/* Metodo que revisa si la entidad actual es un fantasma rojo y maneja su logica de movimiento y colision. 
+/* Este metodo verifica si la entidad en analisis es un fantasma rojo. Si lo es, carga el color de la posicion actual 
+/* del fantasma y actualiza su indice en el arreglo de entidades. Luego, verifica si la siguiente posicion coincide con 
+/* Pacman. Si Pacman tiene activado el poder de comer fantasmas, el sistema procede a comer al fantasma rojo llamando al 
+/* metodo `reDirectToEatRedGhostAndReturnToCorrectPosition`. Si no tiene el poder activado, el sistema llama al metodo 
+/* `beEatenByGhostAndReturnToStart`, lo que resta una vida a Pacman y lo regresa a su posicion inicial. Finalmente, actualiza 
+/* el color del fantasma rojo en el mapa y regresa al flujo principal para continuar con la logica del juego.
+/* @param: isEntityRojo: variable booleana que indica si la entidad actual es un fantasma rojo.
+/* @param: PosicionHexadecimalEntidadActual: posicion actual de la entidad en el mapa.
+/* @param: ColorTemp: variable auxiliar usada para almacenar temporalmente el color de la posicion actual.
+/* @param: IndexColorAnterior: puntero hacia el color anterior de la entidad.
+/* @param: CONST_GRID_COLOR_YELLOW: constante hexadecimal que representa el color amarillo de Pacman.
+/* @param: CONST_GRID_COLOR_ROJO: constante hexadecimal que representa el color del fantasma rojo.
+reviewAndPaintIfEntitiyisRedGhost, Clear
 									Load isEntityRojo
 									Subt CONST_ONE
 									SkipCond 400
@@ -1070,6 +1389,19 @@ reviewAndPaintIfEntitiyisRedGhost,  Clear
 									
 									Jump IndexMovimientoMasUnoYReconstruccionDeArreglo
 
+/* Metodo que revisa si el fantasma rojo debe ser comido por Pacman o si debe comer a Pacman. 
+/* Este metodo se ejecuta cuando se detecta que la posicion futura del fantasma rojo coincide con 
+/* la posicion de Pacman. Si Pacman tiene activado el poder de comer fantasmas, el sistema procede a 
+/* comer al fantasma rojo llamando al metodo `reDirectToEatRedGhostAndReturnToCorrectPosition`. 
+/* Si no tiene el poder activado, el sistema llama al metodo `beEatenByGhostAndReturnToStart`, lo que 
+/* resta una vida a Pacman y lo regresa a su posicion inicial. Ademas, actualiza las posiciones de Pacman 
+/* y el fantasma rojo en el arreglo de entidades y en el mapa.
+/* @param: CanComerFantasmas: variable booleana que indica si Pacman tiene activado el poder de comer fantasmas.
+/* @param: PosicionHexadecimalEntityActAux: variable auxiliar que almacena la posicion futura de la entidad.
+/* @param: CONST_GRID_COLOR_YELLOW: constante hexadecimal que representa el color amarillo de Pacman.
+/* @param: CONST_GRID_COLOR_NEGRO: constante hexadecimal que representa el color negro.
+/* @param: IndexPointerEntityArray: puntero hacia el arreglo de posiciones de las entidades.
+/* @param: IndexEntityArrayInicio: posicion inicial del arreglo de entidades.
 reviewRedGhostIfEatenByOrEatsPacman, HEX 000
 									 // 1. Cargamos el valor de la constante para ver si tenemos que pasar al modo comer 
 									 Load CanComerFantasmas
@@ -1079,32 +1411,53 @@ reviewRedGhostIfEatenByOrEatsPacman, HEX 000
 									 JnS beEatenByGhostAndReturnToStart
 
 									 // 2. Cargamos la posicion de pacman nueva y la ponemos
-									  Load CONST_GRID_COLOR_YELLOW
-									  StoreI PosicionHexadecimalEntityActAux
-									  Load CONST_GRID_COLOR_NEGRO
-									  StoreI PosicionHexadecimalEntidadActual
+									 Load CONST_GRID_COLOR_YELLOW
+									 StoreI PosicionHexadecimalEntityActAux
+									 Load CONST_GRID_COLOR_NEGRO
+									 StoreI PosicionHexadecimalEntidadActual
 
-									   // 3. Cargamos la posicion de pacman nueva en el arreglo de posiciones
-									   Load IndexPointerEntityArray
-									   Store extractedPosition
+									 // 3. Cargamos la posicion de pacman nueva en el arreglo de posiciones
+									 Load IndexPointerEntityArray
+									 Store extractedPosition
 
+									 Load PosicionHexadecimalEntityActAux
+									 StoreI IndexEntityArrayInicio
 
-									   Load PosicionHexadecimalEntityActAux
-									   StoreI IndexEntityArrayInicio
-
-									   Load extractedPosition
-									   Store IndexPointerEntityArray
+									 Load extractedPosition
+									 Store IndexPointerEntityArray
 									   
-									  Load CONST_GRID_COLOR_NEGRO
-									  StoreI PosicionHexadecimalEntidadAnterior
+									 Load CONST_GRID_COLOR_NEGRO
+									 StoreI PosicionHexadecimalEntidadAnterior
 									
-
 									 //2. Regresamos normalmente 
 									 Jump IndexMovimientoMasUnoYReconstruccionDeArreglo
 
+
+
+/* Metodo adaptador que redirige la logica para comer al fantasma rojo y regresar a su posicion inicial. 
+/* Este metodo se ejecuta cuando Pacman tiene activado el poder de comer fantasmas y colisiona con un fantasma rojo. 
+/* Llama al metodo `eatRedGhostAndReturnToCorrectPosition` para manejar el proceso de comer al fantasma rojo, 
+/* actualizar el puntaje y regresar al flujo principal del juego.
+/* @param: eatRedGhostAndReturnToCorrectPosition: metodo que maneja el proceso de comer al fantasma rojo.
 reDirectToEatRedGhostAndReturnToCorrectPosition, HEX 000
 									JnS eatRedGhostAndReturnToCorrectPosition
 									Jump IndexMovimientoMasUnoYReconstruccionDeArreglo
+
+
+									
+/* Metodo que revisa si la entidad actual es un fantasma verde y realiza las acciones correspondientes. 
+/* Este metodo se ejecuta cuando se detecta que la entidad en analisis es un fantasma verde. Primero, carga el color 
+/* de la posicion actual del fantasma y actualiza su indice en el arreglo de entidades. Luego, verifica si la siguiente 
+/* posicion coincide con Pacman. Si Pacman tiene activado el poder de comer fantasmas, el sistema procede a comer al 
+/* fantasma verde llamando al metodo `reDirectToEatGreenGhostAndReturnToCorrectPosition`. Si no tiene el poder activado, 
+/* el sistema llama al metodo `beEatenByGhostAndReturnToStart`, lo que resta una vida a Pacman y lo regresa a su posicion inicial. 
+/* Finalmente, actualiza el color del fantasma verde en el mapa y regresa al flujo principal para continuar con la logica del juego.
+/* @param: isEntityVerde: variable booleana que indica si la entidad actual es un fantasma verde.
+/* @param: PosicionHexadecimalEntidadActual: posicion actual de la entidad en el mapa.
+/* @param: ColorTemp: variable auxiliar usada para almacenar temporalmente el color de la posicion actual.
+/* @param: IndexColorAnterior: puntero hacia el color anterior de la entidad.
+/* @param: CONST_GRID_COLOR_YELLOW: constante hexadecimal que representa el color amarillo de Pacman.
+/* @param: CONST_GRID_COLOR_VERDE: constante hexadecimal que representa el color del fantasma verde.
 reviewAndPaintIfEntityisGreenGhost, Clear
 									Load isEntityVerde
 									Subt CONST_ONE
@@ -1131,6 +1484,20 @@ reviewAndPaintIfEntityisGreenGhost, Clear
 									
 									Jump IndexMovimientoMasUnoYReconstruccionDeArreglo
 
+
+/* Metodo que revisa si el fantasma verde debe ser comido por Pacman o si debe comer a Pacman. 
+/* Este metodo se ejecuta cuando se detecta que la posicion futura del fantasma verde coincide con 
+/* la posicion de Pacman. Si Pacman tiene activado el poder de comer fantasmas, el sistema procede a 
+/* comer al fantasma verde llamando al metodo `reDirectToEatGreenGhostAndReturnToCorrectPosition`. 
+/* Si no tiene el poder activado, el sistema llama al metodo `beEatenByGhostAndReturnToStart`, lo que 
+/* resta una vida a Pacman y lo regresa a su posicion inicial. Ademas, actualiza las posiciones de Pacman 
+/* y el fantasma verde en el arreglo de entidades y en el mapa.
+/* @param: CanComerFantasmas: variable booleana que indica si Pacman tiene activado el poder de comer fantasmas.
+/* @param: PosicionHexadecimalEntityActAux: variable auxiliar que almacena la posicion futura de la entidad.
+/* @param: CONST_GRID_COLOR_YELLOW: constante hexadecimal que representa el color amarillo de Pacman.
+/* @param: CONST_GRID_COLOR_NEGRO: constante hexadecimal que representa el color negro.
+/* @param: IndexPointerEntityArray: puntero hacia el arreglo de posiciones de las entidades.
+/* @param: IndexEntityArrayInicio: posicion inicial del arreglo de entidades.
 reviewGreenGhostIfEatenByOrEatsPacman, HEX 000
 									  //1.  Cargamos el valor de la constante para ver si comemos o no
 									  Load CanComerFantasmas
@@ -1162,11 +1529,32 @@ reviewGreenGhostIfEatenByOrEatsPacman, HEX 000
 									  // 2. Regresamos normalmente
 									  Jump IndexMovimientoMasUnoYReconstruccionDeArreglo
 
+
+/* Metodo adaptador que redirige la logica para comer al fantasma verde y regresar a su posicion inicial. 
+/* Este metodo se ejecuta cuando Pacman tiene activado el poder de comer fantasmas y colisiona con un fantasma verde. 
+/* Llama al metodo `eatGreenGhostAndReturnToCorrectPosition` para manejar el proceso de comer al fantasma verde, 
+/* actualizar el puntaje y regresar al flujo principal del juego.
+/* @param: eatGreenGhostAndReturnToCorrectPosition: metodo que maneja el proceso de comer al fantasma verde.
 reDirectToEatGreenGhostAndReturnToCorrectPosition, HEX 000
 													JnS eatGreenGhostAndReturnToCorrectPosition
 													Jump IndexMovimientoMasUnoYReconstruccionDeArreglo
 
-reviewAndPaintIfEtityisPinkGhost,   Clear	
+
+/* Metodo que revisa si la entidad actual es un fantasma rosado y maneja su logica de movimiento y colision. 
+/* Este metodo verifica si la entidad en analisis es un fantasma rosado. Si lo es, carga el color de la posicion 
+/* actual del fantasma y actualiza su indice en el arreglo de entidades. Luego, verifica si la siguiente posicion 
+/* coincide con Pacman. Si Pacman tiene activado el poder de comer fantasmas, el sistema procede a comer al fantasma 
+/* rosado llamando al metodo `reDirectToEatPinkGhostAndReturnToCorrectPosition`. Si no tiene el poder activado, el 
+/* sistema llama al metodo `beEatenByGhostAndReturnToStart`, lo que resta una vida a Pacman y lo regresa a su posicion 
+/* inicial. Finalmente, actualiza el color del fantasma rosado en el mapa y regresa al flujo principal para continuar 
+/* con la logica del juego.
+/* @param: isEntityRosado: variable booleana que indica si la entidad actual es un fantasma rosado.
+/* @param: PosicionHexadecimalEntidadActual: posicion actual de la entidad en el mapa.
+/* @param: ColorTemp: variable auxiliar usada para almacenar temporalmente el color de la posicion actual.
+/* @param: IndexColorAnterior: puntero hacia el color anterior de la entidad.
+/* @param: CONST_GRID_COLOR_YELLOW: constante hexadecimal que representa el color amarillo de Pacman.
+/* @param: CONST_GRID_COLOR_ROSADO: constante hexadecimal que representa el color del fantasma rosado.
+reviewAndPaintIfEtityisPinkGhost, Clear
 								    LoadI PosicionHexadecimalEntidadActual
 									Store ColorTemp
 									JnS ActualizarIndexEntity
@@ -1188,6 +1576,19 @@ reviewAndPaintIfEtityisPinkGhost,   Clear
 									
 									Jump IndexMovimientoMasUnoYReconstruccionDeArreglo
 
+/* Metodo que revisa si el fantasma rosado debe ser comido por Pacman o si debe comer a Pacman. 
+/* Este metodo se ejecuta cuando se detecta que la posicion futura del fantasma rosado coincide con 
+/* la posicion de Pacman. Si Pacman tiene activado el poder de comer fantasmas, el sistema procede a 
+/* comer al fantasma rosado llamando al metodo `reDirectToEatPinkGhostAndReturnToCorrectPosition`. 
+/* Si no tiene el poder activado, el sistema llama al metodo `beEatenByGhostAndReturnToStart`, lo que 
+/* resta una vida a Pacman y lo regresa a su posicion inicial. Ademas, actualiza las posiciones de Pacman 
+/* y el fantasma rosado en el arreglo de entidades y en el mapa.
+/* @param: CanComerFantasmas: variable booleana que indica si Pacman tiene activado el poder de comer fantasmas.
+/* @param: PosicionHexadecimalEntityActAux: variable auxiliar que almacena la posicion futura de la entidad.
+/* @param: CONST_GRID_COLOR_YELLOW: constante hexadecimal que representa el color amarillo de Pacman.
+/* @param: CONST_GRID_COLOR_NEGRO: constante hexadecimal que representa el color negro.
+/* @param: IndexPointerEntityArray: puntero hacia el arreglo de posiciones de las entidades.
+/* @param: IndexEntityArrayInicio: posicion inicial del arreglo de entidades.
 reviewPinkGhostIfEatenByOrEatsPacman, HEX 000
 									  //1.  Cargamos el valor de la constante para ver si comemos o no
 									  Load CanComerFantasmas
@@ -1222,9 +1623,23 @@ reviewPinkGhostIfEatenByOrEatsPacman, HEX 000
 									  JumpI reviewPinkGhostIfEatenByOrEatsPacman
 
 
+/* Metodo adaptador que redirige la logica para comer al fantasma rosado y regresar a su posicion inicial. 
+/* Este metodo se ejecuta cuando Pacman tiene activado el poder de comer fantasmas y colisiona con un fantasma rosado. 
+/* Llama al metodo `eatPinkGhostAndReturnToCorrectPosition` para manejar el proceso de comer al fantasma rosado, 
+/* actualizar el puntaje y regresar al flujo principal del juego.
+/* @param: eatPinkGhostAndReturnToCorrectPosition: metodo que maneja el proceso de comer al fantasma rosado.
 reDirectToEatPinkGhostAndReturnToCorrectPosition, HEX 000
 												  JnS eatPinkGhostAndReturnToCorrectPosition
 												  Jump IndexMovimientoMasUnoYReconstruccionDeArreglo
+
+
+/* Metodo que actualiza el arreglo de posiciones de las entidades con la posicion actual de la entidad en analisis. 
+/* Este metodo se utiliza para mantener sincronizado el arreglo de posiciones de las entidades con los movimientos 
+/* realizados durante el juego. 
+/* Primero, almacena la posicion actual de la entidad en el arreglo de posiciones y luego incrementa el puntero 
+/* del arreglo para apuntar a la siguiente posicion.
+/* @param: PosicionHexadecimalEntidadActual: posicion actual de la entidad en el mapa.
+/* @param: IndexPointerEntityArray: puntero hacia la posicion actual en el arreglo de posiciones de las entidades.
 ActualizarIndexEntity, HEX 000
 					   Load PosicionHexadecimalEntidadActual
 					   StoreI IndexPointerEntityArray
@@ -1234,7 +1649,14 @@ ActualizarIndexEntity, HEX 000
 					   JumpI ActualizarIndexEntity
 
 
-SumarMonedaATotal,   Clear
+/* Metodo que suma un punto al puntaje total del juego cuando Pacman recolecta una moneda. 
+/* Este metodo incrementa tanto el puntaje auxiliar como el puntaje principal del juego en uno. 
+/* Luego, muestra el puntaje actualizado en pantalla y regresa al flujo principal 
+/* para continuar con la logica del juego.
+/* @param: PuntosDeLaPartidaAux: variable que almacena el puntaje auxiliar del juego.
+/* @param: PuntosDeLaPartida: variable que almacena el puntaje total del juego.
+/* @param: CONST_ONE: constante numerica de valor uno.
+SumarMonedaATotal, Clear
 				     Load PuntosDeLaPartidaAux
 					 Add CONST_ONE
 					 Store PuntosDeLaPartidaAux
@@ -1246,6 +1668,15 @@ SumarMonedaATotal,   Clear
 		             Jump IndexMovimientoMasUnoYReconstruccionDeArreglo
 					
 				
+/* Metodo que gestiona el incremento del puntero de movimientos y reconstruye las entidades en el mapa. 
+/* Este metodo verifica si la entidad en analisis es Pacman. Si no lo es, incrementa el puntero del arreglo 
+/* de movimientos y revisa si la posicion actual contiene una moneda o un power-up. 
+/* Dependiendo del resultado, redirige el flujo hacia metodos de revision adicionales o guarda el color 
+/* correspondiente en el mapa. Finalmente, reconstruye las entidades en el mapa.
+/* @param: isEntityPacman: variable booleana que indica si la entidad actual es Pacman.
+/* @param: IndexPointerToMovementArray: puntero hacia el arreglo de movimientos.
+/* @param: ColorTemp: variable auxiliar usada para almacenar temporalmente el color de la posicion actual.
+/* @param: CONST_GRID_COLOR_MONEDA: constante hexadecimal que representa el color de las monedas.
 IndexMovimientoMasUnoYReconstruccionDeArreglo, Clear
 					 Load isEntityPacman
 						Subt CONST_ONE
@@ -1261,7 +1692,22 @@ IndexMovimientoMasUnoYReconstruccionDeArreglo, Clear
 						Jump GuadarColor
 
 
-RebuildEntities, 	Clear
+/* Metodo que reconstruye las entidades en el mapa despues de un movimiento. 
+/* Este metodo recorre el arreglo de posiciones de las entidades y pinta cada entidad en 
+/* su posicion correspondiente en el mapa. 
+/* Luego, verifica si Pacman ha recolectado todas las monedas para finalizar el juego o 
+/* si aun tiene vidas restantes para continuar jugando.
+/* @param: IndexEntityArrayCopia: copia del puntero hacia el arreglo de posiciones de las entidades.
+/* @param: LocationTemp: variable auxiliar usada para almacenar temporalmente la posicion de una entidad.
+/* @param: CONST_GRID_COLOR_YELLOW: constante hexadecimal que representa el color amarillo de Pacman.
+/* @param: CONST_GRID_COLOR_TURQUESA: constante hexadecimal que representa el color del fantasma turquesa.
+/* @param: CONST_GRID_COLOR_ROJO: constante hexadecimal que representa el color del fantasma rojo.
+/* @param: CONST_GRID_COLOR_VERDE: constante hexadecimal que representa el color del fantasma verde.
+/* @param: CONST_GRID_COLOR_ROSADO: constante hexadecimal que representa el color del fantasma rosado.
+/* @param: PuntosDeLaPartidaAux: variable que almacena el puntaje auxiliar del juego.
+/* @param: CONST_TOTAL_MONEDAS: constante numerica que representa el total de monedas en el mapa.
+/* @param: ContadorDeVidas: variable que almacena el numero de vidas restantes de Pacman.
+RebuildEntities, Clear
 					LoadI IndexEntityArrayCopia
 				 	Store LocationTemp
 				 	Load CONST_GRID_COLOR_YELLOW
@@ -1299,17 +1745,31 @@ RebuildEntities, 	Clear
 					 Load PuntosDeLaPartidaAux
 					 Subt CONST_TOTAL_MONEDAS
 					 SkipCond 0C00
-					 END2, Halt
+					END2, Halt
 					Load ContadorDeVidas
 					SkipCond 400
 					JumpI internallyMoveAnEntity
 					Jump whileTrue
 					
+/* Metodo que revisa si la posicion actual contiene un power-up naranja. 
+/* Este metodo verifica si el color de la posicion actual coincide con el color del 
+/* power-up naranja. Si no coincide, redirige el flujo hacia metodos adicionales de revision 
+/* o guarda el color correspondiente en el mapa.
+/* @param: ColorTemp: variable auxiliar usada para almacenar temporalmente el color de la posicion actual.
+/* @param: CONST_GRID_COLOR_NARANJA: constante hexadecimal que representa el color del power-up naranja.
 RevisionNaranja, Load ColorTemp
 				Subt CONST_GRID_COLOR_NARANJA
 				SkipCond 400
 				Jump RevisionFantasmaEncimadeFantasmaTurquesa
 				Jump GuadarColor
+
+
+/* Metodo que revisa si hay un fantasma turquesa superpuesto en la posicion actual. 
+/* Este metodo verifica si el color de la posicion actual coincide con el color del fantasma 
+/* turquesa. Si coincide, carga el color anterior del fantasma turquesa y lo guarda en el mapa.
+/* @param: ColorTemp: variable auxiliar usada para almacenar temporalmente el color de la posicion actual.
+/* @param: CONST_GRID_COLOR_TURQUESA: constante hexadecimal que representa el color del fantasma turquesa.
+/* @param: IndexColorAnteriorInicio: puntero hacia el inicio del arreglo de colores anteriores.
 RevisionFantasmaEncimadeFantasmaTurquesa, Load ColorTemp
 								Subt CONST_GRID_COLOR_TURQUESA
 								SkipCond 400
@@ -1317,6 +1777,14 @@ RevisionFantasmaEncimadeFantasmaTurquesa, Load ColorTemp
 								LoadI IndexColorAnteriorInicio
 								Store ColorTemp
 								Jump GuadarColor
+
+								
+/* Metodo que revisa si hay un fantasma rojo superpuesto en la posicion actual. 
+/* Este metodo verifica si el color de la posicion actual coincide con el color del fantasma rojo. 
+/* Si coincide, carga el color anterior del fantasma rojo y lo guarda en el mapa.
+/* @param: ColorTemp: variable auxiliar usada para almacenar temporalmente el color de la posicion actual.
+/* @param: CONST_GRID_COLOR_ROJO: constante hexadecimal que representa el color del fantasma rojo.
+/* @param: IndexColorAnteriorInicio: puntero hacia el inicio del arreglo de colores anteriores.
 RevisionFantasmaEncimadeFantasmaRojo, Load ColorTemp
 										Subt CONST_GRID_COLOR_ROJO
 										SkipCond 400
@@ -1327,6 +1795,14 @@ RevisionFantasmaEncimadeFantasmaRojo, Load ColorTemp
 										LoadI IndexColorAnteriorAux
 										Store ColorTemp
 										Jump GuadarColor
+
+
+/* Metodo que revisa si hay un fantasma verde superpuesto en la posicion actual. 
+/* Este metodo verifica si el color de la posicion actual coincide con el color del fantasma verde. 
+/* Si coincide, carga el color anterior del fantasma verde y lo guarda en el mapa.
+/* @param: ColorTemp: variable auxiliar usada para almacenar temporalmente el color de la posicion actual.
+/* @param: CONST_GRID_COLOR_VERDE: constante hexadecimal que representa el color del fantasma verde.
+/* @param: IndexColorAnteriorInicio: puntero hacia el inicio del arreglo de colores anteriores.
 RevisionFantasmaEncimadeFantasmaVerde, Load ColorTemp
 										Subt CONST_GRID_COLOR_VERDE
 										SkipCond 400
@@ -1337,6 +1813,13 @@ RevisionFantasmaEncimadeFantasmaVerde, Load ColorTemp
 										LoadI IndexColorAnteriorAux
 										Store ColorTemp
 										Jump GuadarColor
+										
+/* Metodo que revisa si hay un fantasma rosado superpuesto en la posicion actual. 
+/* Este metodo verifica si el color de la posicion actual coincide con el color del fantasma rosado. 
+/* Si coincide, carga el color anterior del fantasma rosado y lo guarda en el mapa.
+/* @param: ColorTemp: variable auxiliar usada para almacenar temporalmente el color de la posicion actual.
+/* @param: CONST_GRID_COLOR_ROSADO: constante hexadecimal que representa el color del fantasma rosado.
+/* @param: IndexColorAnteriorInicio: puntero hacia el inicio del arreglo de colores anteriores.
 RevisionFantasmaEncimadeFantasmaRosado, Load ColorTemp
 										Subt CONST_GRID_COLOR_ROSADO
 										SkipCond 400
@@ -1347,10 +1830,28 @@ RevisionFantasmaEncimadeFantasmaRosado, Load ColorTemp
 										LoadI IndexColorAnteriorAux
 										Store ColorTemp
 										Jump GuadarColor
+
+
+/* Metodo que guarda el color negro en el mapa. 
+/* Este metodo se utiliza cuando no se detecta ninguna entidad en la posicion actual. 
+/* Almacena el color negro en la posicion correspondiente del mapa.
+/* @param: CONST_GRID_COLOR_NEGRO: constante hexadecimal que representa el color negro.
 GuadarNegro, Load CONST_GRID_COLOR_NEGRO
 			Store ColorTemp
+
+
+/* Metodo que guarda el color actual en el mapa. 
+/* Este metodo almacena el color cargado en `ColorTemp` en la posicion correspondiente del mapa.
+/* @param: ColorTemp: variable auxiliar usada para almacenar temporalmente el color de la posicion actual.
 GuadarColor, Load ColorTemp
 			StoreI IndexColorAnterior
+
+
+/* Metodo que incrementa el puntero de colores si la entidad actual no es el fantasma rosado. 
+/* Este metodo verifica si la entidad en analisis es el fantasma rosado. Si no lo es, incrementa 
+/* el puntero de colores y regresa al metodo `RebuildEntities`.
+/* @param: isEntityRosado: variable booleana que indica si la entidad actual es el fantasma rosado.
+/* @param: IndexColorAnterior: puntero hacia el arreglo de colores anteriores.
 MoveIndexColor,	Load isEntityRosado
 				Subt CONST_ONE
 				SkipCond 000
@@ -1359,6 +1860,15 @@ MoveIndexColor,	Load isEntityRosado
 				Add CONST_ONE
 				Store IndexColorAnterior
 				Jump RebuildEntities
+
+
+/* Metodo que reinicia el ciclo de reconstruccion de entidades. 
+/* Este metodo reinicia el puntero del arreglo de posiciones de las entidades y 
+/* el contador de entidades en analisis. Luego, regresa al metodo `RebuildEntities` para continuar 
+/* con la reconstruccion de las entidades en el mapa.
+/* @param: IndexEntityArrayInicio: puntero hacia el inicio del arreglo de posiciones de las entidades.
+/* @param: ContadorDeEntidadEnAnalisis: variable que almacena el numero de la entidad en analisis.
+/* @param: IndexColorAnteriorInicio: puntero hacia el inicio del arreglo de colores anteriores.
 ReiniciarLoopEntity, Load IndexEntityArrayInicio
 					Store IndexPointerEntityArray
 					Clear
@@ -1592,7 +2102,7 @@ CONST_ORIGINAL_FANTASMA_VERDE_LOCATION, HEX F78  /*cambiar en cambio de mapa
 CONST_ORIGINAL_FANTASMA_ROSADO_LOCATION, HEX F68  /*cambiar en cambio de mapa
 /* @definition: Variables requeridas para el manejo del ciclo de vida del programa
 /* contadores, vidas, puntaje.
-ContadorDeVidas, DEC 5
+ContadorDeVidas, DEC 3
 CanComerFantasmas, DEC 0
 CONST_MOVIMIENTOS_PERMITIDOS_PARA_COMER, DEC 32
 ContadorMovimientosHechosConPowerUpComer, DEC 0
