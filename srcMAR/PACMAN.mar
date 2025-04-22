@@ -2055,7 +2055,7 @@ cargaDeMapaYEntidadesAlDisplay, HEX 000
 								Subt CONST_LIMITE_MOVIMIENTOS
 								SkipCond 800
 								Jump intMainLoopLoadGame
-									 
+								JumpI cargaDeMapaYEntidadesAlDisplay									 
 /*Variables*/
 /* @defintion: variables auxiliares requeridas para el manejo de modulo y division
 extractedPosition, HEX 000
@@ -2077,7 +2077,7 @@ CONST_TOTAL_MONEDAS, DEC 29
 
 CONST_LIMITE_MOVIMIENTOS, DEC 255
 CONST_TWO_FIFTY_SIX, DEC 256
-CONST_POSICION_INICIAL_ARREGLO_MOVIMIENTOS, HEX 565 /* cambiar cuando añades lineas
+CONST_POSICION_INICIAL_ARREGLO_MOVIMIENTOS, HEX 566 /* cambiar cuando añades lineas
 CONST_MOVIMIENTO_DERECHA, DEC 1
 CONST_MOVIMIENTO_ARRIBA, DEC 2
 CONST_MOVIMIENTO_IZQUIERDA, DEC 3
@@ -2112,7 +2112,7 @@ ContadorRevisionInicial, DEC 0
 PuntosDeLaPartida, DEC 0
 PuntosDeLaPartidaAux, DEC 0
 ContadorDeEntidadEnAnalisis, DEC 0
-IndexPointerToMovementArray, HEX 565 /*cambio cuando añades lineas
+IndexPointerToMovementArray, HEX 566 /*cambio cuando añades lineas
 IndexDisplay, HEX F00
 /* @definition: Varaibles requeridas para el manejo posicional y el analisis de las entidades dentro 
 /* del juego.
@@ -2124,11 +2124,11 @@ PosicionHexadecimalEntidadActual, HEX 000
 PosicionHexadecimalEntidadAnterior, HEX 000
 PosicionHexadecimalEntityActAux, HEX 000
 PosicionHexadecimalGhostMovidoAux, HEX 000
-IndexPointerEntityArray, HEX 458 /*cambio cuando añades lineas
-IndexEntityArrayCopia, HEX 458 /*cambio cuando añades lineas
-IndexEntityArrayInicio, Hex 458 /*cambio cuando añades lineas
+IndexPointerEntityArray, HEX 459 /*cambio cuando añades lineas
+IndexEntityArrayCopia, HEX 459 /*cambio cuando añades lineas
+IndexEntityArrayInicio, Hex 459 /*cambio cuando añades lineas
 ithPositionInMovementArray, DEC 0
-IndexPointerToColoresArray, HEX 465 /*cambio cuando añades lineas
+IndexPointerToColoresArray, HEX 466 /*cambio cuando añades lineas
 LocationTemp, HEX 000
 positionRevision, HEX 000
 /* @definition: Variables requeridas para el manejo de control logico del programa, especificamente, del tipo de estructura que 
@@ -2146,10 +2146,10 @@ EntityArray, HEX FB7  /*cambiar en cambio de mapa
 			HEX F78
 			HEX F68
 ColorTemp, HEX 000
-IndexColorAnterior, HEX 461 /* Cambiar siempre a la posicion de memoria a donde apunta ColorAnteriorArray 
+IndexColorAnterior, HEX 462 /* Cambiar siempre a la posicion de memoria a donde apunta ColorAnteriorArray 
 							/* en su primera posicion
-IndexColorAnteriorInicio, HEX 461 /*Duplicar el inicio para poder regresar
-IndexColorAnteriorAux, HEX 461 /*Duplicar el inicio para poder regresar
+IndexColorAnteriorInicio, HEX 462 /*Duplicar el inicio para poder regresar
+IndexColorAnteriorAux, HEX 462 /*Duplicar el inicio para poder regresar
 ColorAnteriorArray, Hex 000
 					Hex 000
 					Hex 000
