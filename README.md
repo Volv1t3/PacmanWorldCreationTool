@@ -47,32 +47,20 @@ to implement a simulated game of Pac-man through the MARIE assembly programming 
 <p>
 
   This is the holder repository for the project defined as the final project for the Computer Organization course taught at USFQ. The idea of the project was to present a simulation of the Pac-man game based 
-
   on a simple model: movement, points, and entity management. Therefore, the project presented here has two clear components, the first is the Python tool developed to create, manipulate and modify maps within 
-
-  the application, and the other is the actual game implementation held within a single file in the srcMARIE folder. The idea of this project was not only to introduce advanced game programming concepts like entity and asset 
-
-  management, as well as event management, but also to translate OOP and Functional Programming practices down to the MARIE assembly language.
+  the application, and the other is the actual game implementation held within a single file in the srcMARIE folder. The idea of this project was not only to introduce advanced game programming concepts like entity and asset management, as well as event management, but also to translate OOP and Functional Programming practices down to the MARIE assembly language.
 
 </p>
 
 <p>
 
-  To do this, the project implements various functional and OOP programming concepts like the <i>Single Responsibility Principle</i>, as well as design patterns like Adapter to handle events and information management. The 
-
-  implementations of these are stored within the source code for our project present in the srcMARIE folder. On the other hand, the Python application implemented to design the map, and output the map to either the clipboard 
-
-  or a file,  is stored in the src folder. 
+  To do this, the project implements various functional and OOP programming concepts like the <i>Single Responsibility Principle</i>, as well as design patterns like Adapter to handle events and information management. The implementations of these are stored within the source code for our project present in the srcMARIE folder. On the other hand, the Python application implemented to design the map, and output the map to either the clipboard or a file,  is stored in the src folder. 
 
 </p>
 
 <p>
 
-  The project was carried out through Sprints, working on different sections of the application, entity management, map management, movement, and event handling in separate sections, focusing on decoupling, JnS methods and simplicity
-
-  to handle communication and the overall architecture of the application, keeping it simple, streamline and simple to follow. As such, we tested the code thoroughly, working on each section with care and attention to detail but working 
-
-  quickly to make sure the project was finished on time.
+  The project was carried out through Sprints, working on different sections of the application, entity management, map management, movement, and event handling in separate sections, focusing on decoupling, JnS methods and simplicity to handle communication and the overall architecture of the application, keeping it simple, streamline and simple to follow. As such, we tested the code thoroughly, working on each section with care and attention to detail but working quickly to make sure the project was finished on time.
 
 </p>
 
@@ -80,13 +68,9 @@ to implement a simulated game of Pac-man through the MARIE assembly programming 
 
 <code>File Structure</code>
 
-<li><b>src</b>: As mentioned above, the code is divided into two sections, and the files here are all part of the code developed to create, export, and modify map files for MARIE. The process through which this is done is explained
+<li><b>src</b>: As mentioned above, the code is divided into two sections, and the files here are all part of the code developed to create, export, and modify map files for MARIE. The process through which this is done is explained further down.</li>
 
-further down.</li>
-
-  <li><b>srcMARIE</b>: As mentioned above, this section contains only the MARIE code done for the project, refined and tested as per the Pull Request recorded in this repository, this was the main way of code storage and communication 
-
-  bewteen the team as we did not want to push changes into the main branch until we were done with the project.</li>
+  <li><b>srcMARIE</b>: As mentioned above, this section contains only the MARIE code done for the project, refined and tested as per the Pull Request recorded in this repository, this was the main way of code storage and communication bewteen the team as we did not want to push changes into the main branch until we were done with the project.</li>
 
 </ul>
 
@@ -100,13 +84,7 @@ further down.</li>
 
 <p>
 
-  Within the file structure of this project, there are two specific sections that matter, the first is the python (the only high level language implementation) code used to create, modify and export maps directly to code understood 
-
-  by the MARIE lexer and assembler such that we could test quickly maps, test implementation details, as well as the whole system during our integration testing. The code presented here makes use of different python libraries, the most 
-
-  important being <b><code>PyQT5</code></b>, which was used to handle the user desktop application view. Using this library, we were able to create a simple, fast and powerful layout that was both visually appealing and useful, allowing 
-
-  for brush painting, single spot painting, as well as valildation with respect to the amount of entities were already placed on the canvas. 
+  Within the file structure of this project, there are two specific sections that matter, the first is the python (the only high level language implementation) code used to create, modify and export maps directly to code understood by the MARIE lexer and assembler such that we could test quickly maps, test implementation details, as well as the whole system during our integration testing. The code presented here makes use of different python libraries, the most important being <b><code>PyQT5</code></b>, which was used to handle the user desktop application view. Using this library, we were able to create a simple, fast and powerful layout that was both visually appealing and useful, allowing for brush painting, single spot painting, as well as valildation with respect to the amount of entities were already placed on the canvas. 
 
 </p>
 
